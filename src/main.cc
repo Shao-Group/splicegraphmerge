@@ -18,9 +18,11 @@ int main(int argc, const char **argv)
 	gs.load(argv[1]);
 	gs.print();
 
-	combiner cb(gs.gset[0], gs.gset[1]);
-	cb.combine();
-	cb.gr3.print();
+	combiner cb;
+	cb.combine(gs.gset[0]);
+	cb.combine(gs.gset[1]);
+	cb.build_combined_splice_graph();
+	cb.gr.print_weights();
 
 	return 0;
 }
