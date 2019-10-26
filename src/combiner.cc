@@ -1,38 +1,30 @@
-/*
-Part of Scallop Transcript Assembler
-(c) 2017 by  Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
-See LICENSE for licensing.
-*/
-
-#include "sgraph_compare.h"
+#include "combiner.h"
 #include "util.h"
 #include "draw.h"
 
-sgraph_compare::sgraph_compare(const splice_graph &g1, const splice_graph &g2)
+combiner::combiner(const splice_graph &g1, const splice_graph &g2)
 	:gr1(g1), gr2(g2)
 {}
 
-int sgraph_compare::compare(const string &file)
+int combiner::combine()
 {
 	imap.clear();
 	build_split_interval_map(gr1);
 	build_split_interval_map(gr2);
 
-	add_vertices(gr3);
-	add_inner_edges(gr1, gr3, 1);
-	add_inner_edges(gr2, gr3, 2);
-	add_existing_edges(gr1, gr3, 3);
-	add_existing_edges(gr2, gr3, 4);
+	add_vertices();
+	build_vertex_indices();
 
-	if(file != "") draw(gr3, file);
+	add_inner_edges(gr1, 1);
+	add_inner_edges(gr2, 2);
+	add_existing_edges(gr1, 3);
+	add_existing_edges(gr2, 4);
 
-	//compare_boundary_edges();
-	//compare_splice_positions();
-
+	//if(file != "") draw(gr3, file);
 	return 0;
 }
 
-int sgraph_compare::build_split_interval_map(splice_graph &gr)
+int combiner::build_split_interval_map(splice_graph &gr)
 {
 	for(int i = 1; i < gr.num_vertices() - 1; i++)
 	{
@@ -42,27 +34,26 @@ int sgraph_compare::build_split_interval_map(splice_graph &gr)
 	return 0;
 }
 
-int sgraph_compare::add_vertices(splice_graph &gr)
+int combiner::add_vertices()
 {
 	if(imap.size() == 0) return 0;
 
-	gr.add_vertex();
-	gr.set_vertex_weight(0, 1);
+	gr3.add_vertex();
 	vertex_info vi0;
 	SIMI it = imap.begin();
 	vi0.lpos = lower(it->first);
 	vi0.rpos = lower(it->first);
-	gr.set_vertex_info(0, vi0);
+	gr3.set_vertex_info(0, vi0);
 
 	for(it = imap.begin(); it != imap.end(); it++)
 	{
-		gr.add_vertex();
+		gr3.add_vertex();
 		vertex_info vi;
 		vi.length = upper(it->first) - lower(it->first);
 		vi.lpos = lower(it->first);
 		vi.rpos = upper(it->first);
-		gr.set_vertex_weight(gr.num_vertices() - 1, 1);
-		gr.set_vertex_info(gr.num_vertices() - 1, vi);
+		gr3.set_vertex_weight(gr3.num_vertices() - 1, 1);
+		gr3.set_vertex_info(gr3.num_vertices() - 1, vi);
 	}
 
 	it = imap.end();
@@ -70,37 +61,74 @@ int sgraph_compare::add_vertices(splice_graph &gr)
 	vertex_info vin;
 	vin.lpos = upper(it->first);
 	vin.rpos = upper(it->first);
-	gr.add_vertex();
-	gr.set_vertex_weight(gr.num_vertices() - 1, 1);
-	gr.set_vertex_info(gr.num_vertices() - 1, vin);
+	gr3.add_vertex();
+	gr3.set_vertex_weight(gr3.num_vertices() - 1, 1);
+	gr3.set_vertex_info(gr3.num_vertices() - 1, vin);
 	return 0;
 }
 
-int sgraph_compare::add_inner_edges(splice_graph &gt, splice_graph &gr, int type)
+int combiner::build_vertex_indices()
+{
+	lindex.clear();
+	rindex.clear();
+	int n = gr3.num_vertices();
+	for(int k = 1; k < n - 1; k++)
+	{
+		vertex_info vi = gr3.get_vertex_info(k);
+		int32_t l = vi.lpos;
+		int32_t r = vi.rpos;
+		assert(l < r);
+		assert(lindex.find(l) == lindex.end());
+		assert(rindex.find(r) == rindex.end());
+		lindex.insert(pair<int32_t, int>(l, k));
+		rindex.insert(pair<int32_t, int>(r, k));
+
+		//printf("add %d -> %d to lindex\n", l, k);
+		//printf("add %d -> %d to rindex\n", r, k);
+	}
+
+	vertex_info vi1 = gr3.get_vertex_info(0);
+	vertex_info vi2 = gr3.get_vertex_info(n - 1);
+
+	assert(rindex.find(vi1.rpos) == rindex.end());
+	assert(lindex.find(vi2.lpos) == lindex.end());
+	rindex.insert(pair<int32_t, int>(vi1.rpos, 0));
+	lindex.insert(pair<int32_t, int>(vi2.lpos, n - 1));
+
+	//printf("add %d -> %d to rindex\n", vi1.rpos, 0);
+	//printf("add %d -> %d to lindex\n", vi2.lpos, n - 1);
+
+	return 0;
+}
+
+int combiner::add_inner_edges(splice_graph &gt, int type)
 {
 	for(int i = 1; i < gt.num_vertices() - 1; i++)
 	{
 		vertex_info vi = gt.get_vertex_info(i);
 		double w = gt.get_vertex_weight(i);
 
-		int k1 = search_splice_graph(gr, vi.lpos);
-		int k2 = search_splice_graph(gr, vi.rpos - 1);
-		assert(k1 >= 1 && k1 < gr.num_vertices() - 1);
-		assert(k2 >= 1 && k2 < gr.num_vertices() - 1);
+		assert(lindex.find(vi.lpos) != lindex.end());
+		assert(rindex.find(vi.rpos) != rindex.end());
+
+		int k1 = lindex[vi.lpos];
+		int k2 = rindex[vi.rpos];
+
+		//int k1 = search_splice_graph(gr3, vi.lpos);
+		//int k2 = search_splice_graph(gr3, vi.rpos - 1);
+		assert(k1 >= 1 && k1 < gr3.num_vertices() - 1);
+		assert(k2 >= 1 && k2 < gr3.num_vertices() - 1);
 
 		for(int k = k1; k < k2; k++)
 		{
-			edge_descriptor p = gr.add_edge(k, k + 1);
-			gr.set_edge_weight(p, w);
-			edge_info ei;
-			ei.type = type;
-			gr.set_edge_info(p, ei);
+			//printf("inner edge %d -> %d due to vertex [%d, %d)\n", k, k + 1, vi.lpos, vi.rpos);
+			add_edge(gr3, k, k + 1, w, type);
 		}
 	}
 	return 0;
 }
 
-int sgraph_compare::add_existing_edges(splice_graph &gt, splice_graph &gr, int type)
+int combiner::add_existing_edges(splice_graph &gt, int type)
 {
 	edge_iterator it1, it2;
 	PEEI pei;
@@ -114,28 +142,51 @@ int sgraph_compare::add_existing_edges(splice_graph &gt, splice_graph &gr, int t
 		vertex_info vs = gt.get_vertex_info(s);
 		vertex_info vt = gt.get_vertex_info(t);
 
-		int ss = search_splice_graph(gr, vs.rpos - 1);
-		int tt = search_splice_graph(gr, vt.lpos);
+		//int ss = search_splice_graph(gr3, vs.rpos - 1);
+		//int tt = search_splice_graph(gr3, vt.lpos);
 
-		//printf("edge = (%d, %d), type = %d, search %d -> %d\n", s, t, type, vs.rpos - 1, ss);
-		//printf("edge = (%d, %d), type = %d, search %d -> %d\n", s, t, type, vt.lpos, tt);
+		assert(lindex.find(vs.rpos) != lindex.end());
+		assert(rindex.find(vt.lpos) != rindex.end());
 
-		if(s == 0) ss = 0;
-		if(t == gt.num_vertices() - 1) tt = gr.num_vertices() - 1;
+		int ss = rindex[vs.rpos];
+		int tt = lindex[vt.lpos];
 
-		assert(ss >= 0 && ss < gr.num_vertices());
-		assert(tt >= 0 && tt < gr.num_vertices());
+		//if(s == 0) ss = 0;
+		//if(t == gt.num_vertices() - 1) tt = gr3.num_vertices() - 1;
 
-		edge_descriptor p = gr.add_edge(ss, tt);
-		gr.set_edge_weight(p, w);
-		edge_info ei;
-		ei.type = type;
-		gr.set_edge_info(p, ei);
+		//printf("existing edge %d -> %d due to edge from %d [%d, %d) to %d [%d, %d)\n", ss, tt, s, vs.lpos, vs.rpos, t, vt.lpos, vt.rpos);
+		add_edge(gr3, ss, tt, w, type);
 	}
 	return 0;
 }
 
-int sgraph_compare::search_splice_graph(splice_graph &gr, int32_t p)
+int combiner::add_edge(splice_graph &gr, int s, int t, double w, int type)
+{
+	assert(s >= 0 && s < gr.num_vertices());
+	assert(t >= 0 && t < gr.num_vertices());
+
+	PEB p = gr.edge(s, t);
+	if(p.second == false)
+	{
+		edge_descriptor e = gr.add_edge(s, t);
+		gr.set_edge_weight(e, w);
+		edge_info ei;
+		ei.type = type;
+		gr.set_edge_info(e, ei);
+	}
+	else
+	{
+		edge_descriptor e = p.first;
+		w += gr.get_edge_weight(e);
+		gr.set_edge_weight(e, w);
+		edge_info ei;
+		ei.type = type;
+		gr.set_edge_info(e, ei);
+	}
+	return 0;
+}
+
+int combiner::search_splice_graph(splice_graph &gr, int32_t p)
 {
 	if(gr.num_vertices() <= 2) return -1;
 	int l = 1;
@@ -153,7 +204,7 @@ int sgraph_compare::search_splice_graph(splice_graph &gr, int32_t p)
 	return -1;
 }
 
-int sgraph_compare::compare_boundary_edges()
+int combiner::compare_boundary_edges()
 {
 	int tp = 0, fp = 0, fn = 0;
 
@@ -218,7 +269,7 @@ int sgraph_compare::compare_boundary_edges()
 	return 0;
 }
 
-int sgraph_compare::compare_splice_positions()
+int combiner::compare_splice_positions()
 {
 	int tp = 0, fp = 0, fn = 0;
 	for(int i = 1; i < gr1.num_vertices() - 1; i++)
@@ -289,7 +340,7 @@ int sgraph_compare::compare_splice_positions()
 	return 0;
 }
 
-bool sgraph_compare::verify_unique_5end_edge(splice_graph &gr, edge_descriptor e)
+bool combiner::verify_unique_5end_edge(splice_graph &gr, edge_descriptor e)
 {
 	int t = e->target();
 	int type = gr.get_edge_info(e).type;
@@ -337,7 +388,7 @@ bool sgraph_compare::verify_unique_5end_edge(splice_graph &gr, edge_descriptor e
 	return true;
 }
 
-bool sgraph_compare::verify_unique_3end_edge(splice_graph &gr, edge_descriptor e)
+bool combiner::verify_unique_3end_edge(splice_graph &gr, edge_descriptor e)
 {
 	int s = e->source();
 	int type = gr.get_edge_info(e).type;
@@ -385,7 +436,7 @@ bool sgraph_compare::verify_unique_3end_edge(splice_graph &gr, edge_descriptor e
 	return true;
 }
 
-int sgraph_compare::draw(splice_graph &gr, const string &file)
+int combiner::draw(splice_graph &gr, const string &file)
 {
 	ofstream fout(file.c_str());
 	if(fout.fail())

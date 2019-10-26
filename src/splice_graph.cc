@@ -1020,12 +1020,14 @@ int splice_graph::print()
 		printf(" in-vertices ="); 
 		for(pei = in_edges(i), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
 		{
-			printf(" %d, ", (*it1)->source());
+			double w = get_edge_weight(*it1);
+			printf(" (%d, %.1lf),", (*it1)->source(), w);
 		}
 		printf("\n out-vertices = ");
 		for(pei = out_edges(i), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
 		{
-			printf(" %d, ", (*it1)->target());
+			double w = get_edge_weight(*it1);
+			printf(" (%d, %.1lf),", (*it1)->target(), w);
 		}
 		printf("\n");
 	}

@@ -1,19 +1,13 @@
-/*
-Part of Scallop Transcript Assembler
-(c) 2017 by  Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
-See LICENSE for licensing.
-*/
-
-#ifndef __SGRAPH_COMPARE_H__
-#define __SGRAPH_COMPARE_H__
+#ifndef __COMBINER_H__
+#define __COMBINER_H__
 
 #include "splice_graph.h"
 #include "interval_map.h"
 
-class sgraph_compare
+class combiner
 {
 public:
-	sgraph_compare(const splice_graph &g1, const splice_graph &g2);
+	combiner(const splice_graph &g1, const splice_graph &g2);
 
 public:
 	splice_graph gr1;		// reference sgraph
@@ -22,15 +16,19 @@ public:
 
 public:
 	split_interval_map imap;
+	map<int32_t, int> lindex;
+	map<int32_t, int> rindex;
 
 public:
-	int compare(const string &texfile = "");
+	int combine();
 
 private:
 	int build_split_interval_map(splice_graph &gr);
-	int add_vertices(splice_graph &gr);
-	int add_inner_edges(splice_graph &gt, splice_graph &gr, int type);
-	int add_existing_edges(splice_graph &gt, splice_graph &gr, int type);
+	int add_vertices();
+	int build_vertex_indices();
+	int add_inner_edges(splice_graph &gt, int type);
+	int add_existing_edges(splice_graph &gt, int type);
+	int add_edge(splice_graph &gr, int s, int t, double w, int type);
 	int search_splice_graph(splice_graph &gr, int32_t p);
 
 	int compare_splice_positions();

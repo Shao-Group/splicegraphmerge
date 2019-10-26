@@ -1,7 +1,6 @@
 bin_PROGRAMS = splicegraphmerge
 
 splicegraphmerge_SOURCES = splice_graph.h splice_graph.cc \
-						   sgraph_compare.h sgraph_compare.cc \
 						   vertex_info.h vertex_info.cc \
 						   edge_info.h edge_info.cc \
 						   interval_map.h interval_map.cc \
@@ -12,4 +11,5 @@ splicegraphmerge_SOURCES = splice_graph.h splice_graph.cc \
 						   vertex_base.cc vertex_base.h \
 						   draw.h draw.cc \
 						   graph_set.h graph_set.cc \
+						   combiner.h combiner.cc \
 						   main.cc
