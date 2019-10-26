@@ -284,6 +284,8 @@ int splice_graph::build(istream &fin, const string &g, const string &c)
 	while(fin.getline(line, 10240, '\n'))
 	{
 		stringstream sstr(line);
+		if(string(line).length() == 0) break;
+		
 		sstr >> name;
 
 		if(string(name) == "node")
@@ -298,8 +300,7 @@ int splice_graph::build(istream &fin, const string &g, const string &c)
 			set_vertex_weight(index, weight);
 			set_vertex_info(index, vi);
 		}
-
-		if(string(name) == "edge")
+		else if(string(name) == "edge")
 		{
 			int x, y;
 			double weight;
@@ -313,6 +314,10 @@ int splice_graph::build(istream &fin, const string &g, const string &c)
 			edge_descriptor p = add_edge(x, y);
 			set_edge_weight(p, weight);
 			set_edge_info(p, ei);
+		}
+		else
+		{
+			break;
 		}
 	}
 	return 0;

@@ -7,11 +7,15 @@
 #include <cassert>
 #include <sstream>
 
-#include "sgraph_compare.h"
+#include "graph_set.h"
 
 using namespace std;
 
 int main(int argc, const char **argv)
 {
+	graph_set gs;
+	gs.load(argv[1]);
+	gs.print();
+
 	return 0;
 }

@@ -12,6 +12,7 @@ public:
 
 public:
 	int load(const string &file);
+	int print();
 };
 
 #endif
