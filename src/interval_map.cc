@@ -34,6 +34,11 @@ SIMI locate_right_iterator(const split_interval_map &imap, int32_t x)
 	return imap.upper_bound(ROI(x - 1, x));
 }
 
+ISMI locate_right_iterator(const interval_set_map &ism, int32_t x)
+{
+	return ism.upper_bound(interval32(x - 1, x));
+}
+
 SIMI locate_left_iterator(const split_interval_map &imap, int32_t x)
 {
 	SIMI it = imap.lower_bound(ROI(x - 1, x));
@@ -43,6 +48,20 @@ SIMI locate_left_iterator(const split_interval_map &imap, int32_t x)
 	while(upper(it->first) > x)
 	{
 		if(it == imap.begin()) return imap.end();
+		it--;
+	}
+	return it;
+}
+
+ISMI locate_left_iterator(const interval_set_map &ism, int32_t x)
+{
+	ISMI it = ism.lower_bound(interval32(x - 1, x));
+	if(it == ism.end() && it == ism.begin()) return it;
+	if(it == ism.end()) it--;
+
+	while(upper(it->first) > x)
+	{
+		if(it == ism.begin()) return ism.end();
 		it--;
 	}
 	return it;
@@ -65,6 +84,25 @@ PSIMI locate_boundary_iterators(const split_interval_map &imap, int32_t x, int32
 	}
 
 	return PSIMI(lit, rit); 
+}
+
+PISMI locate_boundary_iterators(const interval_set_map &ism, int32_t x, int32_t y)
+{
+	ISMI lit, rit;
+	lit = locate_right_iterator(ism, x);
+	if(lit == ism.end() || upper(lit->first) > y) lit = ism.end();
+
+	rit = locate_left_iterator(ism, y);
+	if(rit == ism.end() || lower(rit->first) < x) rit = ism.end();
+
+	if(lit == ism.end()) assert(rit == ism.end());
+	if(rit == ism.end() && lit != ism.end()) 
+	{
+		//printf("x = %d, y = %d, lit = [%d, %d)\n", x, y, lower(lit->first), upper(lit->first));
+		assert(lit == ism.end());
+	}
+
+	return PISMI(lit, rit); 
 }
 
 int32_t compute_max_overlap(const split_interval_map &imap, SIMI &p, SIMI &q)
@@ -215,6 +253,39 @@ int evaluate_triangle(const split_interval_map &imap, int ll, int rr, double &av
 	return 0;
 }
 
+set<int> get_overlapped_set(const interval_set_map &ism, int32_t x, int32_t y)
+{
+	PISMI pei = locate_boundary_iterators(ism, x, y);
+	ISMI lit = pei.first, rit = pei.second;
+
+	set<int> s;
+	if(lit == ism.end()) return s;
+	if(rit == ism.end()) return s;
+
+	for(ISMI it = lit; ; it++)
+	{
+		assert(upper(it->first) > lower(it->first));
+		s.insert((it->second).begin(), (it->second).end());
+		if(it == rit) break;
+	}
+	return s;
+}
+
+set<int> get_overlapped_set_partial(const interval_set_map &ism, int32_t x, int32_t y)
+{
+	ISMI lit = ism.lower_bound(interval32(x, x + 1));
+	ISMI rit = ism.upper_bound(interval32(y - 1, y));
+
+	set<int> s;
+	for(ISMI it = lit; it != rit; it++)
+	{
+		if(it == ism.end()) break;
+		assert(upper(it->first) > lower(it->first));
+		s.insert((it->second).begin(), (it->second).end());
+	}
+	return s;
+}
+
 int test_split_interval_map()
 {
 	split_interval_map imap;
@@ -287,4 +358,85 @@ int test_split_interval_map()
 	return 0;
 }
 
+int test_interval_set_map()
+{
+	interval_set_map ism;
+	int v1[] = {1};
+	int v2[] = {2};
+	int v3[] = {3};
+	int v4[] = {4};
+	int v5[] = {5};
+	set<int> s1(v1, v1 + 1);
+	set<int> s2(v2, v2 + 1);
+	set<int> s3(v3, v3 + 1);
+	set<int> s4(v4, v4 + 1);
+	set<int> s5(v5, v5 + 1);
+	ism += make_pair(interval32(1, 3), s1);
+	ism += make_pair(interval32(3, 4), s2);
+	ism += make_pair(interval32(5, 8), s3);
+	ism += make_pair(interval32(7, 9), s4);
+	ism += make_pair(interval32(9, 12), s5);
 
+	for(ISMI it = ism.begin(); it != ism.end(); it++)
+	{
+		interval32 iv = it->first;
+		set<int> s = it->second;
+		printf("[%d, %d) -> ", lower(iv), upper(iv));
+		for(set<int>::iterator x = s.begin(); x != s.end(); x++)
+		{
+			printf("%d ", *x);
+		}
+		printf("\n");
+	}
+
+	int aaa, bbb;
+	ISMI xxx;
+	aaa = 3; bbb = 5; xxx = ism.lower_bound(interval32(aaa, bbb)); printf("lower of [%d, %d) => [%d, %d)\n", aaa, bbb, lower(xxx->first), upper(xxx->first));
+	aaa = 2; bbb = 6; xxx = ism.lower_bound(interval32(aaa, bbb)); printf("lower of [%d, %d) => [%d, %d)\n", aaa, bbb, lower(xxx->first), upper(xxx->first));
+	aaa = 4; bbb = 5; xxx = ism.lower_bound(interval32(aaa, bbb)); printf("lower of [%d, %d) => [%d, %d)\n", aaa, bbb, lower(xxx->first), upper(xxx->first));
+	aaa = 3; bbb = 7; xxx = ism.lower_bound(interval32(aaa, bbb)); printf("lower of [%d, %d) => [%d, %d)\n", aaa, bbb, lower(xxx->first), upper(xxx->first));
+	aaa = 5; bbb = 6; xxx = ism.lower_bound(interval32(aaa, bbb)); printf("lower of [%d, %d) => [%d, %d)\n", aaa, bbb, lower(xxx->first), upper(xxx->first));
+
+	aaa = 3; bbb = 5; xxx = ism.upper_bound(interval32(aaa, bbb)); printf("upper of [%d, %d) => [%d, %d)\n", aaa, bbb, lower(xxx->first), upper(xxx->first));
+	aaa = 2; bbb = 6; xxx = ism.upper_bound(interval32(aaa, bbb)); printf("upper of [%d, %d) => [%d, %d)\n", aaa, bbb, lower(xxx->first), upper(xxx->first));
+	aaa = 4; bbb = 5; xxx = ism.upper_bound(interval32(aaa, bbb)); printf("upper of [%d, %d) => [%d, %d)\n", aaa, bbb, lower(xxx->first), upper(xxx->first));
+	aaa = 3; bbb = 7; xxx = ism.upper_bound(interval32(aaa, bbb)); printf("upper of [%d, %d) => [%d, %d)\n", aaa, bbb, lower(xxx->first), upper(xxx->first));
+	aaa = 5; bbb = 6; xxx = ism.upper_bound(interval32(aaa, bbb)); printf("upper of [%d, %d) => [%d, %d)\n", aaa, bbb, lower(xxx->first), upper(xxx->first));
+
+	//aaa = 7; bbb = 8; xxx = ism.lower_bound(interval32(aaa, bbb)); printf("lower of [%d, %d) => [%d, %d)\n", aaa, bbb, lower(xxx->first), upper(xxx->first));
+
+
+	set<int> s;
+	s = get_overlapped_set_partial(ism, 3, 6);
+	printf("sets overlapped with [3, 6):\n");
+	for(set<int>::iterator x = s.begin(); x != s.end(); x++) printf("%d ", *x); printf("\n");
+
+	s = get_overlapped_set_partial(ism, 5, 9);
+	printf("sets overlapped with [5, 9):\n");
+	for(set<int>::iterator x = s.begin(); x != s.end(); x++) printf("%d ", *x); printf("\n");
+
+	s = get_overlapped_set_partial(ism, 4, 8);
+	printf("sets overlapped with [4, 8):\n");
+	for(set<int>::iterator x = s.begin(); x != s.end(); x++) printf("%d ", *x); printf("\n");
+
+
+
+
+	return 0;
+}
+
+int print_interval_set_map(const interval_set_map &ism)
+{
+	for(ISMI it = ism.begin(); it != ism.end(); it++)
+	{
+		const interval32 &iv = it->first;
+		const set<int> &s = it->second;
+		printf("[%d, %d) -> ", lower(iv), upper(iv));
+		for(set<int>::const_iterator x = s.begin(); x != s.end(); x++)
+		{
+			printf("%d ", *x);
+		}
+		printf("\n");
+	}
+	return 0;
+}

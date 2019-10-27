@@ -8,12 +8,14 @@
 #include <sstream>
 
 #include "graph_set.h"
+#include "interval_map.h"
 #include "combined_graph.h"
 
 using namespace std;
 
 int main(int argc, const char **argv)
 {
+	/*
 	graph_set gs;
 	gs.load(argv[1]);
 	gs.print();
@@ -23,6 +25,9 @@ int main(int argc, const char **argv)
 	cb.combine(gs.gset[1]);
 	cb.build_combined_splice_graph();
 	cb.gr.print_weights();
+	*/
+
+	test_interval_set_map();
 
 	return 0;
 }
