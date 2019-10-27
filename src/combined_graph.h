@@ -6,7 +6,7 @@
 
 typedef pair<int32_t, int32_t> PI32;
 
-class combiner
+class combined_graph
 {
 public:
 	split_interval_map imap;

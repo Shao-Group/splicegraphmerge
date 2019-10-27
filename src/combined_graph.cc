@@ -1,15 +1,15 @@
-#include "combiner.h"
+#include "combined_graph.h"
 #include "util.h"
 #include "draw.h"
 
-int combiner::combine(const splice_graph &gt)
+int combined_graph::combine(const splice_graph &gt)
 {
 	combine_vertices(gt);
 	combine_edges(gt);
 	return 0;
 }
 
-int combiner::build_combined_splice_graph()
+int combined_graph::build_combined_splice_graph()
 {
 	build_vertices();
 	build_vertex_indices();
@@ -17,7 +17,7 @@ int combiner::build_combined_splice_graph()
 	return 0;
 }
 
-int combiner::combine_vertices(const splice_graph &gt)
+int combined_graph::combine_vertices(const splice_graph &gt)
 {
 	for(int i = 1; i < gt.num_vertices() - 1; i++)
 	{
@@ -27,7 +27,7 @@ int combiner::combine_vertices(const splice_graph &gt)
 	return 0;
 }
 
-int combiner::combine_edges(const splice_graph &gt)
+int combined_graph::combine_edges(const splice_graph &gt)
 {
 	PEEI pei = gt.edges();
 	for(edge_iterator it = pei.first; it != pei.second; it++)
@@ -49,7 +49,7 @@ int combiner::combine_edges(const splice_graph &gt)
 	return 0;
 }
 
-int combiner::build_vertices()
+int combined_graph::build_vertices()
 {
 	if(imap.size() == 0) return 0;
 
@@ -82,7 +82,7 @@ int combiner::build_vertices()
 	return 0;
 }
 
-int combiner::build_vertex_indices()
+int combined_graph::build_vertex_indices()
 {
 	lindex.clear();
 	rindex.clear();
@@ -115,7 +115,7 @@ int combiner::build_vertex_indices()
 	return 0;
 }
 
-int combiner::build_edges()
+int combined_graph::build_edges()
 {
 	for(map<PI32, double>::iterator it = emap.begin(); it != emap.end(); it++)
 	{
@@ -143,7 +143,7 @@ int combiner::build_edges()
 	return 0;
 }
 
-int combiner::add_edge(splice_graph &gr, int s, int t, double w, int type)
+int combined_graph::add_edge(splice_graph &gr, int s, int t, double w, int type)
 {
 	assert(s >= 0 && s < gr.num_vertices());
 	assert(t >= 0 && t < gr.num_vertices());
@@ -169,7 +169,7 @@ int combiner::add_edge(splice_graph &gr, int s, int t, double w, int type)
 	return 0;
 }
 
-int combiner::draw(splice_graph &gr, const string &file)
+int combined_graph::draw(splice_graph &gr, const string &file)
 {
 	ofstream fout(file.c_str());
 	if(fout.fail())
