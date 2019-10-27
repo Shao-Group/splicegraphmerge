@@ -62,6 +62,7 @@ public:
 	double get_max_in_weight(int v);
 	double get_max_out_weight(int v);
 
+	vector<int32_t> get_splice_positions() const;
 	int count_junctions();
 
 	// modify the splice_graph

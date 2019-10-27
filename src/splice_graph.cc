@@ -236,6 +236,27 @@ edge_descriptor splice_graph::max_in_edge(int v)
 	return ee;
 }
 
+vector<int32_t> splice_graph::get_splice_positions() const
+{
+	set<int32_t> ss;
+	PEEI pei = edges();
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		int s = (*it)->source();
+		int t = (*it)->target();
+		if(s == 0) continue;
+		if(t == num_vertices() - 1) continue;
+		int32_t p1 = get_vertex_info(s).rpos;
+		int32_t p2 = get_vertex_info(t).lpos;
+		if(p1 >= p2) continue;
+		if(ss.find(p1) == ss.end()) ss.insert(p1);
+		if(ss.find(p2) == ss.end()) ss.insert(p2);
+	}
+	vector<int32_t> v(ss.begin(), ss.end());
+	sort(v.begin(), v.end());
+	return v;
+}
+
 int splice_graph::count_junctions()
 {
 	int cnt = 0;

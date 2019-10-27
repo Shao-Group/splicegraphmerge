@@ -6,6 +6,7 @@ int combined_graph::combine(const splice_graph &gt)
 {
 	combine_vertices(gt);
 	combine_edges(gt);
+	combine_splice_positions(gt);
 	return 0;
 }
 
@@ -47,6 +48,37 @@ int combined_graph::combine_edges(const splice_graph &gt)
 		else x->second += 1;
 	}
 	return 0;
+}
+
+int combined_graph::combine_splice_positions(const splice_graph &gt)
+{
+	vector<int32_t> vt = gt.get_splice_positions();
+	vector<int32_t> vv(vt.size() + spos.size(), 0);
+	vector<int32_t>::iterator it = set_union(vt.begin(), vt.end(), spos.begin(), spos.end(), vv.begin());
+	vv.resize(it - vv.begin());
+	spos = vv;
+	return 0;
+}
+
+int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v)
+{
+	vector<int32_t> vv(v.size(), 0);
+	vector<int32_t>::iterator it = set_union(v.begin(), v.end(), spos.begin(), spos.end(), vv.begin());
+	return it - vv.begin();
+}
+
+PI32 combined_graph::get_bounds()
+{
+	if(imap.size() == 0) return PI32(-1, -1);
+
+	SIMI it = imap.begin();
+	int32_t p1 = lower(it->first);
+
+	it = imap.end();
+	it--;
+	int32_t p2 = upper(it->first);
+
+	return PI32(p1, p2);
 }
 
 int combined_graph::build_vertices()
@@ -264,5 +296,12 @@ int combined_graph::draw(splice_graph &gr, const string &file)
 	draw_footer(fout);
 
 	fout.close();
+	return 0;
+}
+
+int combined_graph::print(int index)
+{
+	PI32 p = get_bounds();
+	printf("combined-graph %d: #intervals = %lu, #edges = %lu, boundary = [%d, %d)\n", index, imap.size(), emap.size(), p.first, p.second);
 	return 0;
 }

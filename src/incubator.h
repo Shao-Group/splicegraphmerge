@@ -1,18 +1,22 @@
-#ifndef __GRAPH_SET_H__
-#define __GRAPH_SET_H__
+#ifndef __MERGE_H__
+#define __MERGE_H__
 
 #include "splice_graph.h"
 #include "interval_map.h"
+#include "combined_graph.h"
 
-class graph_set
+class incubator
 {
 public:
-	vector<splice_graph> gset;		// graph set
-	split_interval_map imap;
+	vector<combined_graph> gset;		// graph set
+	interval_set_map ism;
 
 public:
-	int load(const string &file);
+	int merge(const string &file);
+	int merge(const splice_graph &gr);
 	int print();
 };
+
+vector<splice_graph> load(const string &file);
 
 #endif

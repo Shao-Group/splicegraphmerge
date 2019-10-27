@@ -1,9 +1,78 @@
-#include "graph_set.h"
+#include "incubator.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
-int graph_set::load(const string &file)
+int incubator::merge(const string &file)
+{
+	vector<splice_graph> v = load(file);
+	for(int k = 0; k < v.size(); k++)
+	{
+		merge(v[k]);
+	}
+	return 0;
+}
+
+int incubator::merge(const splice_graph &gr)
+{
+	int n = gr.num_vertices() - 1;
+	int32_t l = gr.get_vertex_info(0).rpos;
+	int32_t r = gr.get_vertex_info(n).lpos;
+
+	set<int> s = get_overlapped_set_partial(ism, l, r);
+	vector<int32_t> spos = gr.get_splice_positions();
+
+	// TODO parameter
+	int min_overlapped_splice_position = 2;
+
+	set<int> ss;
+	for(set<int>::iterator it = s.begin(); it != s.end(); it++)
+	{
+		int k = *it;
+		combined_graph &csg = gset[k];
+		int overlap = csg.get_overlapped_splice_positions(spos);
+		if(overlap < min_overlapped_splice_position) continue;
+		ss.insert(k);
+	}
+
+	if(ss.size() == 0)
+	{
+		combined_graph csg;
+		gset.push_back(csg);
+		ss.insert(gset.size() - 1);
+	}
+
+	for(set<int>::iterator it = ss.begin(); it != ss.end(); it++)
+	{
+		int k = *it;
+		combined_graph &csg = gset[k];
+		csg.combine(gr);
+
+		set<int> x;
+		x.insert(k);
+
+		PI32 p = csg.get_bounds();
+		if(p.first == -1 || p.second == -1)
+		{
+			ism += make_pair(interval32(l, r), x);
+		}
+		else
+		{
+			if(l < p.first) ism += make_pair(interval32(l, p.first), x);
+			if(r > p.second) ism += make_pair(interval32(p.second, r), x);
+		}
+	}
+	return 0;
+}
+
+int incubator::print()
+{
+	for(int k = 0; k < gset.size(); k++) gset[k].print(k);
+	return 0;
+}
+
+vector<splice_graph> load(const string &file)
 {
 	ifstream fin(file.c_str());
 	if(fin.fail())
@@ -17,6 +86,7 @@ int graph_set::load(const string &file)
 	char chrm[10240];
 	char tmp[1024];
 
+	vector<splice_graph> v;
 	while(fin.getline(line, 10240, '\n'))
 	{
 		if(line[0] != '#') continue;
@@ -25,18 +95,9 @@ int graph_set::load(const string &file)
 
 		splice_graph gr;
 		gr.build(fin, gid, chrm);
-		gset.push_back(gr);
+		v.push_back(gr);
 	}
 	
 	fin.close();
-	return 0;
-}
-
-int graph_set::print()
-{
-	for(int k = 0; k < gset.size(); k++)
-	{
-		printf("graph %d contains %lu vertices and %lu edges\n", k, gset[k].num_vertices(), gset[k].num_edges());
-	}
-	return 0;
+	return v;
 }
