@@ -14,6 +14,7 @@ public:
 public:
 	int merge(const string &file);
 	int merge(const splice_graph &gr);
+	int write(const string &file);
 	int print();
 };
 

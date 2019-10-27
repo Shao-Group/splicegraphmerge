@@ -20,6 +20,8 @@ int combined_graph::combine(const splice_graph &gt)
 
 int combined_graph::build_combined_splice_graph()
 {
+	gr.clear();
+	gr.chrm = chrm;
 	build_vertices();
 	build_vertex_indices();
 	build_edges();
@@ -312,5 +314,15 @@ int combined_graph::print(int index)
 	PI32 p = get_bounds();
 	printf("combined-graph %d: #combined = %d, chrm = %s, #intervals = %lu, #edges = %lu, boundary = [%d, %d)\n", 
 			index, num_combined, chrm.c_str(), imap.size(), emap.size(), p.first, p.second);
+	return 0;
+}
+
+int combined_graph::write(int index, ostream &os)
+{
+	char name[10240];
+	sprintf(name, "graph.%d", index);
+	gr.gid = string(name);
+	gr.write(os);
+	os << endl;
 	return 0;
 }

@@ -32,6 +32,20 @@ int incubator::merge(const string &file)
 	return 0;
 }
 
+int incubator::write(const string &file)
+{
+	ofstream fout(file.c_str());
+	if(fout.fail()) exit(1);
+
+	for(int k = 0; k < gset.size(); k++)
+	{
+		gset[k].build_combined_splice_graph();
+		gset[k].write(k, fout);
+	}
+	fout.close();
+	return 0;
+}
+
 int incubator::merge(const splice_graph &gr)
 {
 	int n = gr.num_vertices() - 1;

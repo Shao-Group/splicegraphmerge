@@ -39,6 +39,7 @@ public:
 	int draw(splice_graph &gr, const string &file);
 
 	int print(int index);
+	int write(int index, ostream &os);
 };
 
 #endif

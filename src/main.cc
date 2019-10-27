@@ -17,5 +17,6 @@ int main(int argc, const char **argv)
 {
 	incubator icb;
 	icb.merge(argv[1]);
+	icb.write(argv[2]);
 	return 0;
 }

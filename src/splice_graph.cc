@@ -349,8 +349,9 @@ int splice_graph::write(ostream &fin) const
 	fin<<fixed;
 	fin.precision(2);
 	int n = num_vertices();
+	int m = num_edges();
 	
-	fin << "# " << gid.c_str() << " " << chrm.c_str() << " " << n << endl;
+	fin << "# " << gid.c_str() << " " << chrm.c_str() << " " << n << " " << m << endl;
 	for(int i = 0; i < n; i++)
 	{
 		double weight = get_vertex_weight(i);
