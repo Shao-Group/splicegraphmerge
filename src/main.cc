@@ -14,13 +14,7 @@ using namespace std;
 
 int main(int argc, const char **argv)
 {
-	vector<splice_graph> v = load(argv[1]);
-
-	combined_graph cb;
-	cb.combine(v[0]);
-	cb.combine(v[1]);
-	cb.build_combined_splice_graph();
-	cb.gr.print_weights();
-
+	incubator icb;
+	icb.merge(argv[1]);
 	return 0;
 }

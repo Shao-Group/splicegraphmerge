@@ -6,10 +6,28 @@
 
 int incubator::merge(const string &file)
 {
-	vector<splice_graph> v = load(file);
-	for(int k = 0; k < v.size(); k++)
+	ifstream fin(file.c_str());
+	if(fin.fail())
 	{
-		merge(v[k]);
+		printf("cannot open file %s\n", file.c_str());
+		exit(0);
+	}
+
+	char line[102400];
+	while(fin.getline(line, 10240, '\n'))
+	{
+		string s(line);
+		if(s.size() == 0) continue;
+
+		vector<splice_graph> v = load(s);
+		for(int k = 0; k < v.size(); k++)
+		{
+			merge(v[k]);
+		}
+
+		printf("after combining %s\n", line);
+		print();
+		printf("\n");
 	}
 	return 0;
 }
@@ -32,6 +50,9 @@ int incubator::merge(const splice_graph &gr)
 		int k = *it;
 		combined_graph &csg = gset[k];
 		int overlap = csg.get_overlapped_splice_positions(spos);
+
+		printf("overlap with %d, splice-overlap = %d\n", k, overlap);
+
 		if(overlap < min_overlapped_splice_position) continue;
 		ss.insert(k);
 	}
@@ -47,12 +68,13 @@ int incubator::merge(const splice_graph &gr)
 	{
 		int k = *it;
 		combined_graph &csg = gset[k];
+		PI32 p = csg.get_bounds();
+
 		csg.combine(gr);
 
 		set<int> x;
 		x.insert(k);
 
-		PI32 p = csg.get_bounds();
 		if(p.first == -1 || p.second == -1)
 		{
 			ism += make_pair(interval32(l, r), x);
