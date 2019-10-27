@@ -8,7 +8,7 @@
 #include <sstream>
 
 #include "graph_set.h"
-#include "combiner.h"
+#include "combined_graph.h"
 
 using namespace std;
 
@@ -18,7 +18,7 @@ int main(int argc, const char **argv)
 	gs.load(argv[1]);
 	gs.print();
 
-	combiner cb;
+	combined_graph cb;
 	cb.combine(gs.gset[0]);
 	cb.combine(gs.gset[1]);
 	cb.build_combined_splice_graph();
