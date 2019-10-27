@@ -38,7 +38,13 @@ int incubator::merge(const splice_graph &gr)
 	int32_t l = gr.get_vertex_info(0).rpos;
 	int32_t r = gr.get_vertex_info(n).lpos;
 
+	//print_interval_set_map(ism);
+	//printf("query [%d, %d) in ism\n", l, r);
+
 	set<int> s = get_overlapped_set_partial(ism, l, r);
+
+	//printf("get %lu overlapped\n", s.size());
+
 	vector<int32_t> spos = gr.get_splice_positions();
 
 	// TODO parameter
@@ -49,10 +55,8 @@ int incubator::merge(const splice_graph &gr)
 	{
 		int k = *it;
 		combined_graph &csg = gset[k];
+		if(csg.chrm != gr.chrm) continue;
 		int overlap = csg.get_overlapped_splice_positions(spos);
-
-		printf("overlap with %d, splice-overlap = %d\n", k, overlap);
-
 		if(overlap < min_overlapped_splice_position) continue;
 		ss.insert(k);
 	}
@@ -77,6 +81,7 @@ int incubator::merge(const splice_graph &gr)
 
 		if(p.first == -1 || p.second == -1)
 		{
+			assert(l < r);
 			ism += make_pair(interval32(l, r), x);
 		}
 		else

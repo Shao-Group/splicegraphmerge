@@ -281,6 +281,7 @@ set<int> get_overlapped_set_partial(const interval_set_map &ism, int32_t x, int3
 	{
 		if(it == ism.end()) break;
 		assert(upper(it->first) > lower(it->first));
+		//printf("s.size() = %lu\n", s.size());
 		s.insert((it->second).begin(), (it->second).end());
 	}
 	return s;
@@ -371,11 +372,16 @@ int test_interval_set_map()
 	set<int> s3(v3, v3 + 1);
 	set<int> s4(v4, v4 + 1);
 	set<int> s5(v5, v5 + 1);
+	set<int> s6;
+	s6.insert(1);
+	s6.insert(2);
+	s6.insert(3);
+	s6.insert(5);
 	ism += make_pair(interval32(1, 3), s1);
 	ism += make_pair(interval32(3, 4), s2);
 	ism += make_pair(interval32(5, 8), s3);
 	ism += make_pair(interval32(7, 9), s4);
-	ism += make_pair(interval32(9, 12), s5);
+	ism += make_pair(interval32(100, 200), s5);
 
 	for(ISMI it = ism.begin(); it != ism.end(); it++)
 	{
@@ -407,19 +413,21 @@ int test_interval_set_map()
 
 
 	set<int> s;
-	s = get_overlapped_set_partial(ism, 3, 6);
-	printf("sets overlapped with [3, 6):\n");
+	s = get_overlapped_set_partial(ism, 120, 150);
+	printf("sets overlapped with [120, 150):\n");
 	for(set<int>::iterator x = s.begin(); x != s.end(); x++) printf("%d ", *x); printf("\n");
 
 	s = get_overlapped_set_partial(ism, 5, 9);
 	printf("sets overlapped with [5, 9):\n");
 	for(set<int>::iterator x = s.begin(); x != s.end(); x++) printf("%d ", *x); printf("\n");
 
-	s = get_overlapped_set_partial(ism, 4, 8);
-	printf("sets overlapped with [4, 8):\n");
+	s = get_overlapped_set_partial(ism, 20, 30);
+	printf("sets overlapped with [20, 30):\n");
 	for(set<int>::iterator x = s.begin(); x != s.end(); x++) printf("%d ", *x); printf("\n");
 
-
+	s = get_overlapped_set_partial(ism, -3, -1);
+	printf("sets overlapped with [-3, -1):\n");
+	for(set<int>::iterator x = s.begin(); x != s.end(); x++) printf("%d ", *x); printf("\n");
 
 
 	return 0;

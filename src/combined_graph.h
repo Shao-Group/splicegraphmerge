@@ -9,9 +9,14 @@ typedef pair<int32_t, int32_t> PI32;
 class combined_graph
 {
 public:
+	combined_graph();
+
+public:
 	split_interval_map imap;
 	map<PI32, double> emap;
 	vector<int32_t> spos;
+	int num_combined;
+	string chrm;
 
 	splice_graph gr;		// combined splice graph
 	map<int32_t, int> lindex;

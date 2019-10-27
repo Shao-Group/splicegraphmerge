@@ -9,6 +9,7 @@
 
 #include "incubator.h"
 #include "combined_graph.h"
+#include "interval_map.h"
 
 using namespace std;
 

@@ -2,11 +2,19 @@
 #include "util.h"
 #include "draw.h"
 
+combined_graph::combined_graph()
+{
+	num_combined = 0;
+}
+
 int combined_graph::combine(const splice_graph &gt)
 {
+	if(chrm == "") chrm = gt.chrm;
+	assert(gt.chrm == chrm);
 	combine_vertices(gt);
 	combine_edges(gt);
 	combine_splice_positions(gt);
+	num_combined++;
 	return 0;
 }
 
@@ -63,7 +71,7 @@ int combined_graph::combine_splice_positions(const splice_graph &gt)
 int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v)
 {
 	vector<int32_t> vv(v.size(), 0);
-	vector<int32_t>::iterator it = set_union(v.begin(), v.end(), spos.begin(), spos.end(), vv.begin());
+	vector<int32_t>::iterator it = set_intersection(v.begin(), v.end(), spos.begin(), spos.end(), vv.begin());
 	return it - vv.begin();
 }
 
@@ -302,6 +310,7 @@ int combined_graph::draw(splice_graph &gr, const string &file)
 int combined_graph::print(int index)
 {
 	PI32 p = get_bounds();
-	printf("combined-graph %d: #intervals = %lu, #edges = %lu, boundary = [%d, %d)\n", index, imap.size(), emap.size(), p.first, p.second);
+	printf("combined-graph %d: #combined = %d, chrm = %s, #intervals = %lu, #edges = %lu, boundary = [%d, %d)\n", 
+			index, num_combined, chrm.c_str(), imap.size(), emap.size(), p.first, p.second);
 	return 0;
 }
