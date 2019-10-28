@@ -81,7 +81,7 @@ int incubator::merge_component(const set<int> &s)
 		int k = *it;
 		if(k == x) continue;
 
-		printf("final combine %d and %d with %lu and %lu vertices\n", x, k, gset[x].imap.size(), gset[k].imap.size());
+		//printf("final combine %d and %d with %lu and %lu vertices\n", x, k, gset[x].imap.size(), gset[k].imap.size());
 
 		gset[x].combine(gset[k]);
 		merged[k] = true;
