@@ -48,10 +48,14 @@ int combined_graph::combine_edges(const splice_graph &gt)
 
 		int s = e->source();
 		int t = e->target();
-		vertex_info vs = gt.get_vertex_info(s);
-		vertex_info vt = gt.get_vertex_info(t);
 
-		PI32 p(vs.rpos, vt.lpos);
+		int32_t ss = gt.get_vertex_info(s).rpos;
+		int32_t tt = gt.get_vertex_info(t).lpos;
+
+		if(s == 0) ss = -1;
+		if(t == gt.num_vertices() - 1) tt = -2;
+
+		PI32 p(ss, tt);
 		map<PI32, double>::iterator x = emap.find(p);
 
 		if(x == emap.end()) emap.insert(pair<PI32, double>(p, w));
@@ -159,15 +163,38 @@ int combined_graph::build_vertex_indices()
 
 int combined_graph::build_edges()
 {
+	int n = gr.num_vertices() - 1;
 	for(map<PI32, double>::iterator it = emap.begin(); it != emap.end(); it++)
 	{
 		int32_t s = it->first.first;
 		int32_t t = it->first.second;
 		double w = it->second;
 
-		map<int32_t, int>::iterator xs = rindex.find(s);
-		map<int32_t, int>::iterator xt = lindex.find(t);
+		int ks = -1;
+		int kt = -1;
+		if(s == -1) 
+		{
+			ks = 0;
+		}
+		else
+		{
+			map<int32_t, int>::iterator xs = rindex.find(s);
+			assert(xs != rindex.end());
+			ks = xs->second;
+		}
 
+		if(t == -2)
+		{
+			kt = n;
+		}
+		else
+		{
+			map<int32_t, int>::iterator xt = lindex.find(t);
+			assert(xt != lindex.end());
+			kt = xt->second;
+		}
+
+		/*
 		if(xt == lindex.end())
 		{
 			for(int k = 0; k < gr.num_vertices(); k++)
@@ -177,12 +204,7 @@ int combined_graph::build_edges()
 			}
 			printf("now test edge %d -> %d\n", s, t);
 		}
-
-		assert(xs != rindex.end());
-		assert(xt != lindex.end());
-
-		int ks = xs->second;
-		int kt = xt->second;
+		*/
 
 		PEB p = gr.edge(ks, kt);
 		assert(p.second == false);
