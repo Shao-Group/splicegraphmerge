@@ -15,8 +15,17 @@ using namespace std;
 
 int main(int argc, const char **argv)
 {
-	incubator icb;
-	icb.binary_merge(argv[1]);
-	icb.write(argv[2]);
+	if(argc == 3)
+	{
+		incubator icb("");
+		icb.binary_merge(argv[1]);
+		icb.write(argv[2]);
+	}
+	else if(argc == 4)
+	{
+		incubator icb(argv[3]);
+		icb.binary_merge(argv[1]);
+		icb.write(argv[2]);
+	}
 	return 0;
 }

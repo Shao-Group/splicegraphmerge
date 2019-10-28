@@ -8,9 +8,13 @@
 class incubator
 {
 public:
+	incubator(const string &dir);
+
+public:
 	vector<combined_graph> gset;		// graph set
 	interval_set_map ism;
 	vector<bool> merged;
+	string mdir;
 
 public:
 	// single-chain merge

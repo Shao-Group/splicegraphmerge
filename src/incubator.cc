@@ -5,6 +5,11 @@
 #include <iostream>
 #include <algorithm>
 
+incubator::incubator(const string &dir)
+{
+	mdir = dir;
+}
+
 int incubator::merge(const string &file)
 {
 	ifstream fin(file.c_str());
@@ -101,6 +106,13 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 	printf("merge final with %lu (%lu/%lu) combined-graphs for files [%d, %d)\n", gset.size(), vc1.size(), vc2.size(), low, high);
 
 	merge_final();
+
+	if(mdir != "" && high - low >= 10)
+	{
+		char file[10240];
+		sprintf(file, "%s/graph-%d-%d.gr\n", mdir.c_str(), low, high - 1);
+		write(file);
+	}
 
 	assert(merged.size() == gset.size());
 
