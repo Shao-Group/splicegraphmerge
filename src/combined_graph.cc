@@ -1,5 +1,4 @@
 #include "combined_graph.h"
-#include "util.h"
 #include "draw.h"
 
 combined_graph::combined_graph()
