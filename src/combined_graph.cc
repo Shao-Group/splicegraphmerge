@@ -53,6 +53,7 @@ int combined_graph::combine_vertices(const splice_graph &gt)
 	{
 		vertex_info vi = gt.get_vertex_info(i);
 		imap += make_pair(ROI(vi.lpos, vi.rpos), 1);
+		//printf("add interval: graph contains %lu vertices, %lu edges, imap.size() = %lu, advance = %ld\n", gt.num_vertices(), gt.num_edges(), imap.size(), std::distance(imap.begin(), imap.end()));
 	}
 	return 0;
 }
@@ -402,7 +403,7 @@ int combined_graph::print(int index)
 {
 	PI32 p = get_bounds();
 	printf("combined-graph %d: #combined = %d, chrm = %s, #intervals = %lu, #edges = %lu, boundary = [%d, %d)\n", 
-			index, num_combined, chrm.c_str(), imap.size(), emap.size(), p.first, p.second);
+			index, num_combined, chrm.c_str(), std::distance(imap.begin(), imap.end()), emap.size(), p.first, p.second);
 	return 0;
 }
 
