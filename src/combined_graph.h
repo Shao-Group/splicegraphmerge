@@ -5,6 +5,7 @@
 #include "interval_map.h"
 
 typedef pair<int32_t, int32_t> PI32;
+typedef pair<double, int> DI;
 
 class combined_graph
 {
@@ -13,7 +14,7 @@ public:
 
 public:
 	split_interval_map imap;
-	map<PI32, double> emap;
+	map<PI32, DI> emap;
 	vector<int32_t> spos;
 	int num_combined;
 	string chrm;

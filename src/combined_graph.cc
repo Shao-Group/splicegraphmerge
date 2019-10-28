@@ -56,10 +56,14 @@ int combined_graph::combine_edges(const splice_graph &gt)
 		if(t == gt.num_vertices() - 1) tt = -2;
 
 		PI32 p(ss, tt);
-		map<PI32, double>::iterator x = emap.find(p);
+		map<PI32, DI>::iterator x = emap.find(p);
 
-		if(x == emap.end()) emap.insert(pair<PI32, double>(p, w));
-		else x->second += 1;
+		if(x == emap.end()) emap.insert(pair<PI32, DI>(p, DI(w, 1)));
+		else 
+		{
+			x->second.first += w;
+			x->second.second += 1;
+		}
 	}
 	return 0;
 }
@@ -164,11 +168,12 @@ int combined_graph::build_vertex_indices()
 int combined_graph::build_edges()
 {
 	int n = gr.num_vertices() - 1;
-	for(map<PI32, double>::iterator it = emap.begin(); it != emap.end(); it++)
+	for(map<PI32, DI>::iterator it = emap.begin(); it != emap.end(); it++)
 	{
 		int32_t s = it->first.first;
 		int32_t t = it->first.second;
-		double w = it->second;
+		double w = it->second.first;
+		int c = it->second.second;
 
 		int ks = -1;
 		int kt = -1;
@@ -212,6 +217,7 @@ int combined_graph::build_edges()
 		edge_descriptor e = gr.add_edge(ks, kt);
 		gr.set_edge_weight(e, w);
 		edge_info ei;
+		ei.type = c;
 		gr.set_edge_info(e, ei);
 	}
 
@@ -354,7 +360,9 @@ int combined_graph::write(int index, ostream &os)
 {
 	char name[10240];
 	sprintf(name, "graph.%d", index);
-	gr.gid = string(name);
+	int n = gr.num_vertices();
+	int m = gr.num_edges();
+	os << "# " << name << " " << chrm.c_str() << " " << n << " " << m << " " << num_combined << endl;
 	gr.write(os);
 	os << endl;
 	return 0;
