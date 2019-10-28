@@ -167,6 +167,17 @@ int combined_graph::build_edges()
 
 		map<int32_t, int>::iterator xs = rindex.find(s);
 		map<int32_t, int>::iterator xt = lindex.find(t);
+
+		if(xt == lindex.end())
+		{
+			for(int k = 0; k < gr.num_vertices(); k++)
+			{
+				vertex_info vi = gr.get_vertex_info(k);
+				printf("node %d: [%d, %d)\n", k, vi.lpos, vi.rpos);
+			}
+			printf("now test edge %d -> %d\n", s, t);
+		}
+
 		assert(xs != rindex.end());
 		assert(xt != lindex.end());
 
