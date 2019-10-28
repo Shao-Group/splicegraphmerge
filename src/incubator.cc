@@ -1,4 +1,5 @@
 #include "incubator.h"
+#include "undirected_graph.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -29,6 +30,62 @@ int incubator::merge(const string &file)
 		print();
 		printf("\n");
 	}
+
+	merge_final();
+
+	return 0;
+}
+
+int incubator::merge_final()
+{
+	undirected_graph gr;
+	for(int k = 0; k < gset.size(); k++) gr.add_vertex();
+
+	int min_overlapped_splice_position = 2;
+	for(ISMI it = ism.begin(); it != ism.end(); it++)
+	{
+		set<int> s = it->second;
+		vector<int> v(s.begin(), s.end());
+		for(int xi = 0; xi < v.size(); xi++)
+		{
+			int i = v[xi];
+			for(int xj = xi + 1; xj < v.size(); xj++)
+			{
+				int j = v[xj];
+				int c = gset[j].get_overlapped_splice_positions(gset[i].spos);
+				if(c < min_overlapped_splice_position) continue;
+				if(gset[i].chrm != gset[j].chrm) continue;
+				gr.add_edge(i, j);
+			}
+		}
+	}
+
+	vector< set<int> > vs = gr.compute_connected_components();
+
+	for(int k = 0; k < vs.size(); k++)
+	{
+		merge_component(vs[k]);
+	}
+
+	return 0;
+}
+
+int incubator::merge_component(const set<int> &s)
+{
+	if(s.size() <= 1) return 0;
+	int x = *(s.begin());
+
+	merged.assign(gset.size(), false);
+	for(set<int>::iterator it = s.begin(); it != s.end(); it++)
+	{
+		int k = *it;
+		if(k == x) continue;
+
+		printf("final combine %d and %d with %lu and %lu vertices\n", x, k, gset[x].imap.size(), gset[k].imap.size());
+
+		gset[x].combine(gset[k]);
+		merged[k] = true;
+	}
 	return 0;
 }
 
@@ -39,6 +96,7 @@ int incubator::write(const string &file)
 
 	for(int k = 0; k < gset.size(); k++)
 	{
+		if(merged[k] == true) continue;
 		gset[k].build_combined_splice_graph();
 		gset[k].write(k, fout);
 	}
@@ -73,6 +131,7 @@ int incubator::merge(const splice_graph &gr)
 		int overlap = csg.get_overlapped_splice_positions(spos);
 		if(overlap < min_overlapped_splice_position) continue;
 		ss.insert(k);
+		break;
 	}
 
 	if(ss.size() == 0)

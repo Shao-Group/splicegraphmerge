@@ -29,6 +29,11 @@ public:
 	int combine_edges(const splice_graph &gt);
 	int combine_splice_positions(const splice_graph &gt);
 
+	int combine(const combined_graph &gt);
+	int combine_vertices(const combined_graph &gt);
+	int combine_edges(const combined_graph &gt);
+	int combine_splice_positions(const combined_graph &gt);
+
 	int build_combined_splice_graph();
 	int build_vertices();
 	int build_vertex_indices();

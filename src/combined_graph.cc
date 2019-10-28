@@ -17,6 +17,17 @@ int combined_graph::combine(const splice_graph &gt)
 	return 0;
 }
 
+int combined_graph::combine(const combined_graph &gt)
+{
+	if(chrm == "") chrm = gt.chrm;
+	assert(gt.chrm == chrm);
+	combine_vertices(gt);
+	combine_edges(gt);
+	combine_splice_positions(gt);
+	num_combined += gt.num_combined;
+	return 0;
+}
+
 int combined_graph::build_combined_splice_graph()
 {
 	gr.clear();
@@ -24,6 +35,15 @@ int combined_graph::build_combined_splice_graph()
 	build_vertices();
 	build_vertex_indices();
 	build_edges();
+	return 0;
+}
+
+int combined_graph::combine_vertices(const combined_graph &gt)
+{
+	for(SIMI it = gt.imap.begin(); it != gt.imap.end(); it++)
+	{
+		imap += make_pair(it->first, 1);
+	}
 	return 0;
 }
 
@@ -67,11 +87,42 @@ int combined_graph::combine_edges(const splice_graph &gt)
 	return 0;
 }
 
+int combined_graph::combine_edges(const combined_graph &gt)
+{
+	for(map<PI32, DI>::const_iterator it = gt.emap.begin(); it != gt.emap.end(); it++)
+	{
+		PI32 p = it->first;
+		DI d = it->second;
+
+		map<PI32, DI>::iterator x = emap.find(p);
+
+		if(x == emap.end())
+		{
+			emap.insert(pair<PI32, DI>(p, d));
+		}
+		else 
+		{
+			x->second.first += d.first;
+			x->second.second += d.second;
+		}
+	}
+	return 0;
+}
+
 int combined_graph::combine_splice_positions(const splice_graph &gt)
 {
 	vector<int32_t> vt = gt.get_splice_positions();
 	vector<int32_t> vv(vt.size() + spos.size(), 0);
 	vector<int32_t>::iterator it = set_union(vt.begin(), vt.end(), spos.begin(), spos.end(), vv.begin());
+	vv.resize(it - vv.begin());
+	spos = vv;
+	return 0;
+}
+
+int combined_graph::combine_splice_positions(const combined_graph &gt)
+{
+	vector<int32_t> vv(gt.spos.size() + spos.size(), 0);
+	vector<int32_t>::iterator it = set_union(gt.spos.begin(), gt.spos.end(), spos.begin(), spos.end(), vv.begin());
 	vv.resize(it - vv.begin());
 	spos = vv;
 	return 0;
