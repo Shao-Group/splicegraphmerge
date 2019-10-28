@@ -36,6 +36,82 @@ int incubator::merge(const string &file)
 	return 0;
 }
 
+int incubator::binary_merge(const string &file)
+{
+	ifstream fin(file.c_str());
+	if(fin.fail())
+	{
+		printf("cannot open file %s\n", file.c_str());
+		exit(0);
+	}
+
+	vector<string> files;
+
+	char line[102400];
+	while(fin.getline(line, 10240, '\n'))
+	{
+		string s(line);
+		if(s.size() == 0) continue;
+		files.push_back(s);
+	}
+
+	vector<combined_graph> vc;
+	binary_merge(files, 0, files.size(), vc);
+
+	gset = vc;
+	merged.assign(gset.size(), false);
+
+	return 0;
+}
+
+int incubator::binary_merge(const vector<string> &files, int low, int high, vector<combined_graph> &vc)
+{
+	//printf("binary merge from %d to %d (total = %lu)\n", low, high, files.size());
+	vc.clear();
+
+	if(low >= high) return 0;
+
+	if(low + 1 == high)
+	{
+		string file = files[low];
+		vector<splice_graph> v = load(file);
+		for(int k = 0; k < v.size(); k++)
+		{
+			combined_graph gr;
+			gr.combine(v[k]);
+			vc.push_back(gr);
+		}
+		printf("create %lu combined-graphs for file %d (%s)\n", vc.size(), low, files[low].c_str());
+		return 0;
+	}
+
+	int mid = (low + high) / 2;
+
+	vector<combined_graph> vc1;
+	vector<combined_graph> vc2;
+
+	binary_merge(files, low, mid, vc1);
+	binary_merge(files, mid, high, vc2);
+
+	gset = vc1;
+	gset.insert(gset.end(), vc2.begin(), vc2.end());
+
+	build_interval_set_map();
+
+	printf("merge final with %lu (%lu/%lu) combined-graphs for files [%d, %d)\n", gset.size(), vc1.size(), vc2.size(), low, high);
+
+	merge_final();
+
+	assert(merged.size() == gset.size());
+
+	for(int k = 0; k < gset.size(); k++)
+	{
+		if(merged[k] == true) continue;
+		vc.push_back(gset[k]);
+	}
+	return 0;
+}
+
 int incubator::merge_final()
 {
 	undirected_graph gr;
@@ -62,11 +138,14 @@ int incubator::merge_final()
 
 	vector< set<int> > vs = gr.compute_connected_components();
 
+	merged.resize(gset.size());
+	merged.assign(gset.size(), false);
+
+
 	for(int k = 0; k < vs.size(); k++)
 	{
 		merge_component(vs[k]);
 	}
-
 	return 0;
 }
 
@@ -75,7 +154,6 @@ int incubator::merge_component(const set<int> &s)
 	if(s.size() <= 1) return 0;
 	int x = *(s.begin());
 
-	merged.assign(gset.size(), false);
 	for(set<int>::iterator it = s.begin(); it != s.end(); it++)
 	{
 		int k = *it;
@@ -162,6 +240,19 @@ int incubator::merge(const splice_graph &gr)
 			if(l < p.first) ism += make_pair(interval32(l, p.first), x);
 			if(r > p.second) ism += make_pair(interval32(p.second, r), x);
 		}
+	}
+	return 0;
+}
+
+int incubator::build_interval_set_map()
+{
+	ism.clear();
+	for(int k = 0; k < gset.size(); k++)
+	{
+		PI32 p = gset[k].get_bounds();
+		set<int> s;
+		s.insert(k);
+		ism += make_pair(interval32(p.first, p.second), s); 
 	}
 	return 0;
 }

@@ -13,10 +13,18 @@ public:
 	vector<bool> merged;
 
 public:
+	// single-chain merge
 	int merge(const string &file);
 	int merge(const splice_graph &gr);
 	int merge_final();
 	int merge_component(const set<int> &s);
+
+	// binary search
+	int binary_merge(const string &file);
+	int binary_merge(const vector<string> &files, int low, int high, vector<combined_graph> &vc);
+	int build_interval_set_map();
+
+	// write and print
 	int write(const string &file);
 	int print();
 };
