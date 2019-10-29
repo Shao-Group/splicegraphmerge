@@ -24,25 +24,18 @@ public:
 	map<int32_t, int> rindex;
 
 public:
-	int combine(const splice_graph &gt);
-	int combine_vertices(const splice_graph &gt);
-	int combine_edges(const splice_graph &gt);
-	int combine_splice_positions(const splice_graph &gt);
-
 	int combine(const combined_graph &gt);
 	int combine_vertices(const combined_graph &gt);
 	int combine_edges(const combined_graph &gt);
 	int combine_splice_positions(const combined_graph &gt);
 
+	PI32 get_bounds();
+	int get_overlapped_splice_positions(const vector<int32_t> &v);
+
 	int build_combined_splice_graph();
 	int build_vertices();
 	int build_vertex_indices();
 	int build_edges();
-
-	PI32 get_bounds();
-	int get_overlapped_splice_positions(const vector<int32_t> &v);
-	int add_edge(splice_graph &gr, int s, int t, double w, int type);
-	int draw(splice_graph &gr, const string &file);
 
 	int build(istream &is, const string &chrm);
 	int write(ostream &os, int index);
