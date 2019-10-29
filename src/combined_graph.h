@@ -18,6 +18,7 @@ public:
 	vector<int32_t> spos;
 	int num_combined;
 	string chrm;
+	char strand;
 
 	splice_graph gr;		// combined splice graph
 	map<int32_t, int> lindex;

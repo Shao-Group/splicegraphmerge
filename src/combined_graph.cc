@@ -4,12 +4,15 @@
 combined_graph::combined_graph()
 {
 	num_combined = 0;
+	strand = '?';
 }
 
 int combined_graph::combine(const splice_graph &gt)
 {
 	if(chrm == "") chrm = gt.chrm;
+	if(strand == '?') strand = gt.strand;
 	assert(gt.chrm == chrm);
+	assert(gt.strand == strand);
 	combine_vertices(gt);
 	combine_edges(gt);
 	combine_splice_positions(gt);
@@ -20,7 +23,9 @@ int combined_graph::combine(const splice_graph &gt)
 int combined_graph::combine(const combined_graph &gt)
 {
 	if(chrm == "") chrm = gt.chrm;
+	if(strand == '?') strand = gt.strand;
 	assert(gt.chrm == chrm);
+	assert(gt.strand == strand);
 	combine_vertices(gt);
 	combine_edges(gt);
 	combine_splice_positions(gt);
@@ -402,8 +407,8 @@ int combined_graph::draw(splice_graph &gr, const string &file)
 int combined_graph::print(int index)
 {
 	PI32 p = get_bounds();
-	printf("combined-graph %d: #combined = %d, chrm = %s, #intervals = %lu, #edges = %lu, boundary = [%d, %d)\n", 
-			index, num_combined, chrm.c_str(), std::distance(imap.begin(), imap.end()), emap.size(), p.first, p.second);
+	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #intervals = %lu, #edges = %lu, boundary = [%d, %d)\n", 
+			index, num_combined, chrm.c_str(), strand, std::distance(imap.begin(), imap.end()), emap.size(), p.first, p.second);
 	return 0;
 }
 
@@ -413,7 +418,7 @@ int combined_graph::write(int index, ostream &os)
 	sprintf(name, "graph.%d", index);
 	int n = gr.num_vertices();
 	int m = gr.num_edges();
-	os << "# " << name << " " << chrm.c_str() << " " << n << " " << m << " " << num_combined << endl;
+	os << "# " << name << " " << chrm.c_str() << " " << n << " " << m << " " << strand << " " << num_combined << endl;
 	gr.write(os);
 	os << endl;
 	return 0;

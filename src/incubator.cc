@@ -36,7 +36,7 @@ int incubator::merge(const string &file)
 		printf("\n");
 	}
 
-	merge_final();
+	merge_final_interval_map();
 
 	return 0;
 }
@@ -101,11 +101,11 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 	gset = vc1;
 	gset.insert(gset.end(), vc2.begin(), vc2.end());
 
-	build_interval_set_map();
+	//build_interval_map();
 
 	printf("merge final with %lu (%lu/%lu) combined-graphs for files [%d, %d)\n", gset.size(), vc1.size(), vc2.size(), low, high);
 
-	merge_final();
+	merge_final_splice_map();
 
 	if(mdir != "" && high - low >= 10)
 	{
@@ -124,7 +124,7 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 	return 0;
 }
 
-int incubator::merge_final()
+int incubator::merge_final_interval_map()
 {
 	undirected_graph gr;
 	for(int k = 0; k < gset.size(); k++) gr.add_vertex();
@@ -142,6 +142,45 @@ int incubator::merge_final()
 				int j = v[xj];
 				int c = gset[j].get_overlapped_splice_positions(gset[i].spos);
 				if(c < min_overlapped_splice_position) continue;
+				if(gset[i].chrm != gset[j].chrm) continue;
+				if(gset[i].strand != gset[j].strand) continue;
+				gr.add_edge(i, j);
+			}
+		}
+	}
+
+	vector< set<int> > vs = gr.compute_connected_components();
+
+	merged.resize(gset.size());
+	merged.assign(gset.size(), false);
+
+
+	for(int k = 0; k < vs.size(); k++)
+	{
+		merge_component(vs[k]);
+	}
+	return 0;
+}
+
+int incubator::merge_final_splice_map()
+{
+	undirected_graph gr;
+	for(int k = 0; k < gset.size(); k++) gr.add_vertex();
+
+	build_splice_map();
+
+	for(map<int32_t, set<int> >::iterator it = mis.begin(); it != mis.end(); it++)
+	{
+		set<int> s = it->second;
+		vector<int> v(s.begin(), s.end());
+		for(int xi = 0; xi < v.size(); xi++)
+		{
+			int i = v[xi];
+			for(int xj = xi + 1; xj < v.size(); xj++)
+			{
+				int j = v[xj];
+				//int c = gset[j].get_overlapped_splice_positions(gset[i].spos);
+				//if(c < min_overlapped_splice_position) continue;
 				if(gset[i].chrm != gset[j].chrm) continue;
 				gr.add_edge(i, j);
 			}
@@ -256,7 +295,31 @@ int incubator::merge(const splice_graph &gr)
 	return 0;
 }
 
-int incubator::build_interval_set_map()
+int incubator::build_splice_map()
+{
+	mis.clear();
+	for(int k = 0; k < gset.size(); k++)
+	{
+		for(int i = 0; i < gset[k].spos.size(); i++)
+		{
+			int32_t p = gset[k].spos[i];
+			map< int32_t, set<int> >::iterator it = mis.find(p);
+			if(it == mis.end())
+			{
+				set<int> s;
+				s.insert(k);
+				mis.insert(pair<int32_t, set<int> >(p, s));
+			}
+			else
+			{
+				it->second.insert(k);
+			}
+		}
+	}
+	return 0;
+}
+
+int incubator::build_interval_map()
 {
 	ism.clear();
 	for(int k = 0; k < gset.size(); k++)
