@@ -79,13 +79,7 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 	if(low + 1 == high)
 	{
 		string file = files[low];
-		vector<splice_graph> v = load(file);
-		for(int k = 0; k < v.size(); k++)
-		{
-			combined_graph gr;
-			gr.combine(v[k]);
-			vc.push_back(gr);
-		}
+		load(file, vc);
 		printf("create %lu combined-graphs for file %d (%s)\n", vc.size(), low, files[low].c_str());
 		return 0;
 	}
@@ -143,7 +137,6 @@ int incubator::merge_final_interval_map()
 				int c = gset[j].get_overlapped_splice_positions(gset[i].spos);
 				if(c < min_overlapped_splice_position) continue;
 				if(gset[i].chrm != gset[j].chrm) continue;
-				if(gset[i].strand != gset[j].strand) continue;
 				gr.add_edge(i, j);
 			}
 		}
@@ -226,8 +219,8 @@ int incubator::write(const string &file)
 	for(int k = 0; k < gset.size(); k++)
 	{
 		if(merged[k] == true) continue;
-		gset[k].build_combined_splice_graph();
-		gset[k].write(k, fout);
+		//gset[k].build_combined_splice_graph();
+		gset[k].write(fout, k);
 	}
 	fout.close();
 	return 0;
@@ -366,4 +359,33 @@ vector<splice_graph> load(const string &file)
 	
 	fin.close();
 	return v;
+}
+
+int load(const string &file, vector<combined_graph> &vc)
+{
+	ifstream fin(file.c_str());
+	if(fin.fail())
+	{
+		printf("could not load file %s\n", file.c_str());
+		exit(0);
+	}
+
+	char line[10240];
+	char gid[10240];
+	char chrm[10240];
+	char tmp[1024];
+
+	while(fin.getline(line, 10240, '\n'))
+	{
+		if(line[0] != '#') continue;
+		stringstream sstr(line);
+		sstr >> tmp >> gid >> chrm;
+
+		combined_graph gr;
+		gr.build(fin, chrm);
+		vc.push_back(gr);
+	}
+	
+	fin.close();
+	return 0;
 }

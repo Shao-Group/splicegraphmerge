@@ -18,7 +18,6 @@ public:
 	vector<int32_t> spos;
 	int num_combined;
 	string chrm;
-	char strand;
 
 	splice_graph gr;		// combined splice graph
 	map<int32_t, int> lindex;
@@ -45,8 +44,9 @@ public:
 	int add_edge(splice_graph &gr, int s, int t, double w, int type);
 	int draw(splice_graph &gr, const string &file);
 
+	int build(istream &is, const string &chrm);
+	int write(ostream &os);
 	int print(int index);
-	int write(int index, ostream &os);
 };
 
 #endif

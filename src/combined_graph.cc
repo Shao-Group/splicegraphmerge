@@ -4,15 +4,12 @@
 combined_graph::combined_graph()
 {
 	num_combined = 0;
-	strand = '?';
 }
 
 int combined_graph::combine(const splice_graph &gt)
 {
 	if(chrm == "") chrm = gt.chrm;
-	if(strand == '?') strand = gt.strand;
 	assert(gt.chrm == chrm);
-	assert(gt.strand == strand);
 	combine_vertices(gt);
 	combine_edges(gt);
 	combine_splice_positions(gt);
@@ -23,9 +20,7 @@ int combined_graph::combine(const splice_graph &gt)
 int combined_graph::combine(const combined_graph &gt)
 {
 	if(chrm == "") chrm = gt.chrm;
-	if(strand == '?') strand = gt.strand;
 	assert(gt.chrm == chrm);
-	assert(gt.strand == strand);
 	combine_vertices(gt);
 	combine_edges(gt);
 	combine_splice_positions(gt);
@@ -404,22 +399,152 @@ int combined_graph::draw(splice_graph &gr, const string &file)
 	return 0;
 }
 
-int combined_graph::print(int index)
+int combined_graph::build(istream &is, const string &c)
 {
-	PI32 p = get_bounds();
-	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #intervals = %lu, #edges = %lu, boundary = [%d, %d)\n", 
-			index, num_combined, chrm.c_str(), strand, std::distance(imap.begin(), imap.end()), emap.size(), p.first, p.second);
+	chrm = c;
+
+	char line[10240];
+	char name[10240];
+
+	int n = -1;
+	vector<int32_t> vv1;
+	vector<int32_t> vv2;
+	while(is.getline(line, 10240, '\n'))
+	{
+		stringstream sstr(line);
+		if(string(line).length() == 0) break;
+		
+		sstr >> name;
+
+		if(string(name) == "node")
+		{
+			int index;
+			double weight;
+			int32_t lpos;
+			int32_t rpos;
+			sstr >> index >> weight >> lpos >> rpos;
+			imap += make_pair(ROI(lpos, rpos), 1);
+
+			if(index > n) n = index;
+			if(vv1.size() <= n) vv1.resize(n + 1);
+			if(vv2.size() <= n) vv2.resize(n + 1);
+
+			vv1[index] = lpos;
+			vv2[index] = rpos;
+		}
+		else if(string(name) == "edge")
+		{
+			int x, y;
+			double w;
+			sstr >> x >> y >> w;
+
+			assert(x != y);
+			assert(x >= 0 && x <= n);
+			assert(y >= 0 && y <= n);
+
+			int32_t s = vv2[x];
+			int32_t t = vv1[y];
+
+			if(x == 0) s = -1;
+			if(y == n) t = -2;
+
+			if(x != 0 && y != n && s < t) spos.push_back(s);
+			if(x != 0 && y != n && s < t) spos.push_back(t);
+
+			PI32 p(s, t);
+			map<PI32, DI>::iterator it = emap.find(p);
+
+			if(it == emap.end()) 
+			{
+				emap.insert(pair<PI32, DI>(p, DI(w, 1)));
+			}
+			else 
+			{
+				it->second.first += w;
+				it->second.second += 1;
+			}
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	sort(spos.begin(), spos.end());
+	num_combined++;
+
 	return 0;
 }
 
-int combined_graph::write(int index, ostream &os)
+int combined_graph::write(ostream &os)
 {
-	char name[10240];
-	sprintf(name, "graph.%d", index);
-	int n = gr.num_vertices();
-	int m = gr.num_edges();
-	os << "# " << name << " " << chrm.c_str() << " " << n << " " << m << " " << strand << " " << num_combined << endl;
-	gr.write(os);
-	os << endl;
+	os<<fixed;
+	os.precision(2);
+
+	PI32 p = get_bounds();
+
+	lindex.clear();
+	rindex.clear();
+
+	int id = 0;
+
+	rindex.insert(pair<int32_t, int>(p.first, 0));
+	os<<"node " << id++ << " "<< 1 << " " << p.first << " " << p.first << endl;
+
+	for(SIMI it = imap.begin(); it != imap.end(); it++)
+	{
+		int32_t l = lower(it->first);
+		int32_t r = upper(it->first);
+		lindex.insert(pair<int32_t, int>(l, id));
+		rindex.insert(pair<int32_t, int>(r, id));
+		os << "node " << id++ << " "<< it->second << " ";
+		os << l << " " << r << endl;
+	}
+
+	lindex.insert(pair<int32_t, int>(p.second, id));
+	os<<"node " << id << " "<< 1 << " " << p.second << " " << p.second << endl;
+
+	for(map<PI32, DI>::iterator it = emap.begin(); it != emap.end(); it++)
+	{
+		int32_t s = it->first.first;
+		int32_t t = it->first.second;
+		double w = it->second.first;
+		int c = it->second.second;
+
+		int ks = -1;
+		int kt = -1;
+		if(s == -1) 
+		{
+			ks = 0;
+		}
+		else
+		{
+			map<int32_t, int>::iterator xs = rindex.find(s);
+			assert(xs != rindex.end());
+			ks = xs->second;
+		}
+
+		if(t == -2)
+		{
+			kt = id;
+		}
+		else
+		{
+			map<int32_t, int>::iterator xt = lindex.find(t);
+			assert(xt != lindex.end());
+			kt = xt->second;
+		}
+
+		os << "edge " << ks << " " << kt << " " << w << " " << c << endl;
+	}
+
+	return 0;
+}
+
+int combined_graph::print(int index)
+{
+	PI32 p = get_bounds();
+	printf("combined-graph %d: #combined = %d, chrm = %s, #intervals = %lu, #edges = %lu, boundary = [%d, %d)\n", 
+			index, num_combined, chrm.c_str(), std::distance(imap.begin(), imap.end()), emap.size(), p.first, p.second);
 	return 0;
 }

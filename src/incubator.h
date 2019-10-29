@@ -37,5 +37,6 @@ public:
 };
 
 vector<splice_graph> load(const string &file);
+int load(const string &file, vector<combined_graph> &vc);
 
 #endif
