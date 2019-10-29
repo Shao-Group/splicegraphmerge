@@ -73,7 +73,7 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 	{
 		char file[10240];
 		sprintf(file, "%s/graph-%d-%d.gr", mdir.c_str(), low, high - 1);
-		write(file);
+		write(file, true);
 	}
 
 	assert(merged.size() == gset.size());
@@ -150,7 +150,7 @@ int incubator::merge_component(const set<int> &s)
 	return 0;
 }
 
-int incubator::write(const string &file)
+int incubator::write(const string &file, bool headers)
 {
 	ofstream fout(file.c_str());
 	if(fout.fail()) exit(1);
@@ -159,7 +159,7 @@ int incubator::write(const string &file)
 	{
 		if(merged[k] == true) continue;
 		//gset[k].build_combined_splice_graph();
-		gset[k].write(fout, k);
+		gset[k].write(fout, k, headers);
 	}
 	fout.close();
 	return 0;

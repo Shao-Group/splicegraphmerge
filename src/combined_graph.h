@@ -38,7 +38,7 @@ public:
 	int build_edges();
 
 	int build(istream &is, const string &chrm);
-	int write(ostream &os, int index);
+	int write(ostream &os, int index, bool headers = false);
 	int write(ostream &os);
 	int print(int index);
 };

@@ -357,15 +357,18 @@ int combined_graph::write(ostream &os)
 	return 0;
 }
 
-int combined_graph::write(ostream &os, int index)
+int combined_graph::write(ostream &os, int index, bool headers)
 {
 	char name[10240];
 	sprintf(name, "graph.%d", index);
 	int n = std::distance(imap.begin(), imap.end()) + 2;
 	int m = emap.size();
 	os << "# " << name << " " << chrm.c_str() << " " << n << " " << m << " " << num_combined << endl;
-	write(os);
-	os << endl;
+	if(headers == false)
+	{
+		write(os);
+		os << endl;
+	}
 	return 0;
 }
 

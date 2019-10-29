@@ -32,7 +32,7 @@ public:
 	int build_splice_map();
 
 	// write and print
-	int write(const string &file);
+	int write(const string &file, bool headers = false);
 	int print();
 };
 
