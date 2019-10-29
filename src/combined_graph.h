@@ -45,6 +45,7 @@ public:
 	int draw(splice_graph &gr, const string &file);
 
 	int build(istream &is, const string &chrm);
+	int write(ostream &os, int index);
 	int write(ostream &os);
 	int print(int index);
 };

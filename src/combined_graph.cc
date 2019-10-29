@@ -504,6 +504,8 @@ int combined_graph::write(ostream &os)
 	lindex.insert(pair<int32_t, int>(p.second, id));
 	os<<"node " << id << " "<< 1 << " " << p.second << " " << p.second << endl;
 
+    assert(std::distance(imap.begin(), imap.end()) + 1 == id);
+
 	for(map<PI32, DI>::iterator it = emap.begin(); it != emap.end(); it++)
 	{
 		int32_t s = it->first.first;
@@ -538,6 +540,18 @@ int combined_graph::write(ostream &os)
 		os << "edge " << ks << " " << kt << " " << w << " " << c << endl;
 	}
 
+	return 0;
+}
+
+int combined_graph::write(ostream &os, int index)
+{
+	char name[10240];
+	sprintf(name, "graph.%d", index);
+	int n = std::distance(imap.begin(), imap.end()) + 2;
+	int m = emap.size();
+	os << "# " << name << " " << chrm.c_str() << " " << n << " " << m << " " << num_combined << endl;
+	write(os);
+	os << endl;
 	return 0;
 }
 
