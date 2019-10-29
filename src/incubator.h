@@ -5,6 +5,9 @@
 #include "interval_map.h"
 #include "combined_graph.h"
 
+typedef map< int32_t, set<int> > MISI;
+typedef pair< int32_t, set<int> > PISI;
+
 class incubator
 {
 public:
@@ -12,8 +15,8 @@ public:
 
 public:
 	vector<combined_graph> gset;			// graph set
-	map< int32_t, set<int> > mis;			// splice map
 	interval_set_map ism;					// interval map
+	MISI mis;								// splice map
 	vector<bool> merged;					// whether gset[k] is merged
 	string mdir;							// output dir
 
@@ -22,8 +25,7 @@ public:
 	int binary_merge(const string &file);
 	int binary_merge(const vector<string> &files, int low, int high, vector<combined_graph> &vc);
 
-	int merge_final_interval_map();
-	int merge_final_splice_map();
+	int merge();
 	int merge_component(const set<int> &s);
 
 	int build_interval_map();
