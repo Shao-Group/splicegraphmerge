@@ -250,7 +250,8 @@ int combined_graph::build(istream &is, const string &c)
 		{
 			int x, y;
 			double w;
-			sstr >> x >> y >> w;
+			int c;
+			sstr >> x >> y >> w >> c;
 
 			assert(x != y);
 			assert(x >= 0 && x <= n);
@@ -270,12 +271,12 @@ int combined_graph::build(istream &is, const string &c)
 
 			if(it == emap.end()) 
 			{
-				emap.insert(pair<PI32, DI>(p, DI(w, 1)));
+				emap.insert(pair<PI32, DI>(p, DI(w, c)));
 			}
 			else 
 			{
 				it->second.first += w;
-				it->second.second += 1;
+				it->second.second += c;
 			}
 		}
 		else
@@ -377,5 +378,34 @@ int combined_graph::print(int index)
 	PI32 p = get_bounds();
 	printf("combined-graph %d: #combined = %d, chrm = %s, #intervals = %lu, #edges = %lu, boundary = [%d, %d)\n", 
 			index, num_combined, chrm.c_str(), std::distance(imap.begin(), imap.end()), emap.size(), p.first, p.second);
+	return 0;
+}
+
+int combined_graph::analyze(int index)
+{
+	int num_junctions = 0;
+	int total_support = 0;
+
+	PI32 p = get_bounds();
+	for(map<PI32, DI>::iterator it = emap.begin(); it != emap.end(); it++)
+	{
+		int32_t s = it->first.first;
+		int32_t t = it->first.second;
+
+		if(s == p.first) continue;
+		if(t == p.second) continue;
+
+		if(s >= t) continue;
+
+		double w = it->second.first;
+		int c = it->second.second;
+
+		num_junctions++;
+		total_support += c;
+	}
+
+	printf("analyze-graph %d: %d junctions, %d total-support, %.2lf average-support, chrm = %s, #vertices = %lu, #edges = %lu, boundary = [%d, %d)\n", 
+			index, num_junctions, total_support, total_support * 1.0 / num_junctions, chrm.c_str(), std::distance(imap.begin(), imap.end()), emap.size(), p.first, p.second);
+
 	return 0;
 }

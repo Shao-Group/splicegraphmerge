@@ -208,6 +208,17 @@ int incubator::print()
 	return 0;
 }
 
+int incubator::analyze(const string &file)
+{
+	vector<combined_graph> vc;
+	load(file, vc);
+	for(int k = 0; k < vc.size(); k++)
+	{
+		vc[k].analyze(k);
+	}
+	return 0;
+}
+
 int load(const string &file, vector<splice_graph> &v)
 {
 	ifstream fin(file.c_str());

@@ -41,6 +41,8 @@ public:
 	int write(ostream &os, int index, bool headers = false);
 	int write(ostream &os);
 	int print(int index);
+
+	int analyze(int index);
 };
 
 #endif

@@ -34,6 +34,9 @@ public:
 	// write and print
 	int write(const string &file, bool headers = false);
 	int print();
+
+	// analysis
+	int analyze(const string &file);
 };
 
 int load(const string &file, vector<splice_graph> &vs);
