@@ -18,6 +18,7 @@ public:
 	map< int32_t, set<PI> > index;
 
 public:
+	int combine(const phasing_path &p);
 	int combine(const vector<int32_t> &v, double w, int c);
 
 private:

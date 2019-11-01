@@ -51,6 +51,8 @@ int combined_graph::combine_edges(const combined_graph &gt)
 
 int combined_graph::combine_paths(const combined_graph &gt)
 {
+	pmap.combine(gt.pmap);
+	/*
 	for(map<vector<int32_t>, DI>::const_iterator it = gt.pmap.begin(); it != gt.pmap.end(); it++)
 	{
 		const vector<int32_t> &p = it->first;
@@ -68,6 +70,7 @@ int combined_graph::combine_paths(const combined_graph &gt)
 			x->second.second += d.second;
 		}
 	}
+	*/
 	return 0;
 }
 
@@ -240,11 +243,11 @@ int combined_graph::build_edges()
 int combined_graph::build_paths()
 {
 	int n = gr.num_vertices() - 1;
-	for(map<vector<int32_t>, DI>::iterator it = pmap.begin(); it != pmap.end(); it++)
+	for(int i = 0; i < pmap.paths.size(); i++)
 	{
-		const vector<int32_t> &v = it->first;
-		double w = it->second.first;
-		int c = it->second.second;
+		const vector<int32_t> &v = pmap.paths[i];
+		double w = pmap.weights[i];
+		int c = pmap.counts[i];
 
 		vector<int> vv;
 		bool fail = false;
@@ -298,7 +301,6 @@ int combined_graph::build_paths()
 
 	return 0;
 }
-
 
 int combined_graph::build(istream &is, const string &c)
 {
@@ -396,9 +398,11 @@ int combined_graph::build(istream &is, const string &c)
 
 			double w;
 			int c;
-
 			sstr >> w >> c;
 
+			pmap.combine(v, w, c);
+
+			/*
 			map<vector<int32_t>, DI>::iterator it = pmap.find(v);
 
 			if(it == pmap.end()) 
@@ -411,11 +415,13 @@ int combined_graph::build(istream &is, const string &c)
 				it->second.first += w;
 				it->second.second += c;
 			}
+			*/
 		}
 		else
 		{
 			break;
 		}
+
 	}
 
 	sort(spos.begin(), spos.end());
@@ -488,11 +494,11 @@ int combined_graph::write(ostream &os)
 		os << "edge " << ks << " " << kt << " " << w << " " << c << endl;
 	}
 
-	for(map<vector<int32_t>, DI>::iterator it = pmap.begin(); it != pmap.end(); it++)
+	for(int i = 0; i < pmap.paths.size(); i++)
 	{
-		const vector<int32_t> &v = it->first;
-		double w = it->second.first;
-		int c = it->second.second;
+		const vector<int32_t> &v = pmap.paths[i];
+		double w = pmap.weights[i];
+		int c = pmap.counts[i];
 
 		vector<int> vv;
 		bool fail = false;
@@ -564,8 +570,8 @@ int combined_graph::write(ostream &os, int index, bool headers)
 int combined_graph::print(int index)
 {
 	PI32 p = get_bounds();
-	printf("combined-graph %d: #combined = %d, chrm = %s, #intervals = %lu, #edges = %lu, boundary = [%d, %d)\n", 
-			index, num_combined, chrm.c_str(), std::distance(imap.begin(), imap.end()), emap.size(), p.first, p.second);
+	printf("combined-graph %d: #combined = %d, chrm = %s, #intervals = %lu, #edges = %lu, #phasing-paths = %lu, boundary = [%d, %d)\n", 
+			index, num_combined, chrm.c_str(), std::distance(imap.begin(), imap.end()), emap.size(), pmap.paths.size(), p.first, p.second);
 	return 0;
 }
 
@@ -592,8 +598,8 @@ int combined_graph::analyze(int index)
 		total_support += c;
 	}
 
-	printf("analyze-graph %d: %d junctions, %d total-support, %.2lf average-support, chrm = %s, #vertices = %lu, #edges = %lu, boundary = [%d, %d)\n", 
-			index, num_junctions, total_support, total_support * 1.0 / num_junctions, chrm.c_str(), std::distance(imap.begin(), imap.end()), emap.size(), p.first, p.second);
+	printf("analyze-graph %d: %d junctions, %d total-support, %.2lf average-support, chrm = %s, #vertices = %lu, #edges = %lu, #phasing-paths = %lu, boundary = [%d, %d)\n", 
+			index, num_junctions, total_support, total_support * 1.0 / num_junctions, chrm.c_str(), std::distance(imap.begin(), imap.end()), emap.size(), pmap.paths.size(), p.first, p.second);
 
 	return 0;
 }

@@ -1,6 +1,15 @@
 #include "phasing_path.h"
 #include <cassert>
 
+int phasing_path::combine(const phasing_path &p)
+{
+	for(int k = 0; k < p.paths.size(); k++)
+	{
+		combine(p.paths[k], p.weights[k], p.counts[k]);
+	}
+	return 0;
+}
+
 int phasing_path::combine(const vector<int32_t> &v, double w, int c)
 {
 	assert(v.size() >= 2);
@@ -26,6 +35,8 @@ int phasing_path::combine(const vector<int32_t> &v, double w, int c)
 	vector<PI> pp;
 
 	binary_merge(s1, s2, vv, pp);
+
+
 	int f = -1;
 	for(int i = 0; i < vv.size(); i++)
 	{
@@ -101,6 +112,8 @@ int phasing_path::binary_merge(const set<PI> &s1, const set<PI> &s2, vector<int>
 		{
 			v.push_back(x1->first);
 			p.push_back(PI(x1->second, x2->second));
+			x1++;
+			x2++;
 		}
 		else if(x1->first < x2->first)
 		{
