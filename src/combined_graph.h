@@ -15,18 +15,21 @@ public:
 public:
 	split_interval_map imap;
 	map<PI32, DI> emap;
+	map<vector<int32_t>, DI> pmap;
 	vector<int32_t> spos;
 	int num_combined;
 	string chrm;
 
-	splice_graph gr;		// combined splice graph
 	map<int32_t, int> lindex;
 	map<int32_t, int> rindex;
+	splice_graph gr;			// combined splice graph
+	map<vector<int>, int> hs;	// hyper-set
 
 public:
 	int combine(const combined_graph &gt);
 	int combine_vertices(const combined_graph &gt);
 	int combine_edges(const combined_graph &gt);
+	int combine_paths(const combined_graph &gt);
 	int combine_splice_positions(const combined_graph &gt);
 
 	PI32 get_bounds();
@@ -36,6 +39,7 @@ public:
 	int build_vertices();
 	int build_vertex_indices();
 	int build_edges();
+	int build_paths();
 
 	int build(istream &is, const string &chrm);
 	int write(ostream &os, int index, bool headers = false);

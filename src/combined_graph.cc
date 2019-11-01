@@ -12,6 +12,7 @@ int combined_graph::combine(const combined_graph &gt)
 	assert(gt.chrm == chrm);
 	combine_vertices(gt);
 	combine_edges(gt);
+	combine_paths(gt);
 	combine_splice_positions(gt);
 	num_combined += gt.num_combined;
 	return 0;
@@ -38,6 +39,28 @@ int combined_graph::combine_edges(const combined_graph &gt)
 		if(x == emap.end())
 		{
 			emap.insert(pair<PI32, DI>(p, d));
+		}
+		else 
+		{
+			x->second.first += d.first;
+			x->second.second += d.second;
+		}
+	}
+	return 0;
+}
+
+int combined_graph::combine_paths(const combined_graph &gt)
+{
+	for(map<vector<int32_t>, DI>::const_iterator it = gt.pmap.begin(); it != gt.pmap.end(); it++)
+	{
+		const vector<int32_t> &p = it->first;
+		DI d = it->second;
+
+		map<vector<int32_t>, DI>::iterator x = pmap.find(p);
+
+		if(x == pmap.end())
+		{
+			pmap.insert(pair<vector<int32_t>, DI>(p, d));
 		}
 		else 
 		{
@@ -85,6 +108,7 @@ int combined_graph::build_combined_splice_graph()
 	build_vertices();
 	build_vertex_indices();
 	build_edges();
+	build_paths();
 	return 0;
 }
 
@@ -213,6 +237,69 @@ int combined_graph::build_edges()
 	return 0;
 }
 
+int combined_graph::build_paths()
+{
+	int n = gr.num_vertices() - 1;
+	for(map<vector<int32_t>, DI>::iterator it = pmap.begin(); it != pmap.end(); it++)
+	{
+		const vector<int32_t> &v = it->first;
+		double w = it->second.first;
+		int c = it->second.second;
+
+		vector<int> vv;
+		bool fail = false;
+		for(int k = 0; k < v.size() / 2; k++)
+		{
+			int32_t s = v[2 * k + 0];
+			int32_t t = v[2 * k + 1];
+
+			int ks = -1;
+			int kt = -1;
+			if(s == -1) 
+			{
+				fail = true;
+				ks = 0;
+			}
+			else
+			{
+				map<int32_t, int>::iterator xs = rindex.find(s);
+				if(xs == rindex.end()) fail = true;
+				else ks = xs->second;
+			}
+
+			if(fail == true) break;
+
+			if(t == -2)
+			{
+				fail = true;
+				kt = n;
+			}
+			else
+			{
+				map<int32_t, int>::iterator xt = lindex.find(t);
+				if(xt == lindex.end()) fail = true;
+				else kt = xt->second;
+			}
+
+			if(fail == true) break;
+
+			if(vv.size() >= 1)
+			{
+				int z = vv.back();
+				for(int j = z + 1; j < ks; j++) vv.push_back(j);
+			}
+			vv.push_back(ks);
+			vv.push_back(kt);
+		}
+
+		assert(hs.find(vv) == hs.end());
+		hs.insert(pair<vector<int>, int>(vv, (int)w));
+	}
+
+	return 0;
+}
+
+
 int combined_graph::build(istream &is, const string &c)
 {
 	chrm = c;
@@ -272,6 +359,52 @@ int combined_graph::build(istream &is, const string &c)
 			if(it == emap.end()) 
 			{
 				emap.insert(pair<PI32, DI>(p, DI(w, c)));
+			}
+			else 
+			{
+				it->second.first += w;
+				it->second.second += c;
+			}
+		}
+		else if(string(name) == "path" || string(name) == "topo")
+		{
+			vector<int32_t> v;
+			int z;
+			sstr >> z;
+			assert(z >= 1);
+			int x, y;
+			sstr >> x;
+			for(int k = 1; k < z; k++)
+			{
+				sstr >> y;
+
+				assert(x != y);
+				assert(x >= 0 && x <= n);
+				assert(y >= 0 && y <= n);
+
+				int32_t s = vv2[x];
+				int32_t t = vv1[y];
+
+				if(x == 0) s = -1;
+				if(y == n) t = -2;
+
+				//if(x != 0 && y != n && s < t) spos.push_back(s);
+				//if(x != 0 && y != n && s < t) spos.push_back(t);
+				v.push_back(s);
+				v.push_back(t);
+			}
+
+			double w;
+			int c;
+
+			sstr >> w >> c;
+
+			map<vector<int32_t>, DI>::iterator it = pmap.find(v);
+
+			if(it == pmap.end()) 
+			{
+				if(string(name) == "topo") pmap.insert(pair<vector<int32_t>, DI>(v, DI(w, 0)));
+				if(string(name) == "path") pmap.insert(pair<vector<int32_t>, DI>(v, DI(w, c)));
 			}
 			else 
 			{
@@ -355,6 +488,62 @@ int combined_graph::write(ostream &os)
 		os << "edge " << ks << " " << kt << " " << w << " " << c << endl;
 	}
 
+	for(map<vector<int32_t>, DI>::iterator it = pmap.begin(); it != pmap.end(); it++)
+	{
+		const vector<int32_t> &v = it->first;
+		double w = it->second.first;
+		int c = it->second.second;
+
+		vector<int> vv;
+		bool fail = false;
+		for(int k = 0; k < v.size() / 2; k++)
+		{
+			int32_t s = v[2 * k + 0];
+			int32_t t = v[2 * k + 1];
+
+			int ks = -1;
+			int kt = -1;
+			if(s == -1) 
+			{
+				fail = true;
+				ks = 0;
+			}
+			else
+			{
+				map<int32_t, int>::iterator xs = rindex.find(s);
+				if(xs == rindex.end()) fail = true;
+				else ks = xs->second;
+			}
+
+			if(fail == true) break;
+
+			if(t == -2)
+			{
+				fail = true;
+				kt = id;
+			}
+			else
+			{
+				map<int32_t, int>::iterator xt = lindex.find(t);
+				if(xt == lindex.end()) fail = true;
+				else kt = xt->second;
+			}
+
+			if(fail == true) break;
+
+			if(vv.size() >= 1)
+			{
+				int z = vv.back();
+				for(int j = z + 1; j < ks; j++) vv.push_back(j);
+			}
+			vv.push_back(ks);
+			vv.push_back(kt);
+		}
+		if(fail == true) continue;
+		os << "path " << vv.size();
+		for(int i = 0; i < vv.size(); i++) os << " " << vv[i];
+		os << " " << w << " " << c << endl;
+	}
 	return 0;
 }
 
