@@ -534,9 +534,8 @@ int combined_graph::write(ostream &os)
 			if(vv.size() >= 1)
 			{
 				int z = vv.back();
-				for(int j = z + 1; j < ks; j++) vv.push_back(j);
+				for(int j = z + 1; j <= ks; j++) vv.push_back(j);
 			}
-			vv.push_back(ks);
 			vv.push_back(kt);
 		}
 		if(fail == true) continue;
