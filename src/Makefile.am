@@ -15,4 +15,5 @@ splicegraphmerge_SOURCES = splice_graph.h splice_graph.cc \
 						   draw.h draw.cc \
 						   incubator.h incubator.cc \
 						   combined_graph.h combined_graph.cc \
+						   phasing_path.h phasing_path.cc \
 						   main.cc
