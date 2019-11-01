@@ -110,6 +110,7 @@ int incubator::merge()
 				//int c = gset[j].get_overlapped_splice_positions(gset[i].spos);
 				//if(c < min_overlapped_splice_position) continue;
 				if(gset[i].chrm != gset[j].chrm) continue;
+				if(gset[i].strand != gset[j].strand) continue;
 				gr.add_edge(i, j);
 			}
 		}
@@ -229,12 +230,14 @@ int load(const string &file, vector<splice_graph> &v)
 	char gid[10240];
 	char chrm[10240];
 	char tmp[1024];
+	char strand[1024];
+	int nodes;
 
 	while(fin.getline(line, 10240, '\n'))
 	{
 		if(line[0] != '#') continue;
 		stringstream sstr(line);
-		sstr >> tmp >> gid >> chrm;
+		sstr >> tmp >> gid >> chrm >> nodes >> strand;
 
 		splice_graph gr;
 		gr.build(fin, gid, chrm);
@@ -258,15 +261,17 @@ int load(const string &file, vector<combined_graph> &vc)
 	char gid[10240];
 	char chrm[10240];
 	char tmp[1024];
+	char strand[1024];
+	int nodes;
 
 	while(fin.getline(line, 10240, '\n'))
 	{
 		if(line[0] != '#') continue;
 		stringstream sstr(line);
-		sstr >> tmp >> gid >> chrm;
+		sstr >> tmp >> gid >> chrm >> nodes >> strand;
 
 		combined_graph gr;
-		gr.build(fin, chrm);
+		gr.build(fin, chrm, strand[0]);
 		vc.push_back(gr);
 	}
 	

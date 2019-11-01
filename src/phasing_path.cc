@@ -12,7 +12,7 @@ int phasing_path::combine(const phasing_path &p)
 
 int phasing_path::combine(const vector<int32_t> &v, double w, int c)
 {
-	assert(v.size() >= 2);
+	assert(v.size() >= 4);
 
 	map< int32_t, set<PI> >::iterator x1 = index.find(v.front()); 
 	if(x1 == index.end())
@@ -125,4 +125,9 @@ int phasing_path::binary_merge(const set<PI> &s1, const set<PI> &s2, vector<int>
 		}
 	}
 	return 0;
+}
+
+int phasing_path::size()
+{
+	return paths.size();
 }

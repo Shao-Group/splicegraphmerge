@@ -20,6 +20,7 @@ public:
 public:
 	int combine(const phasing_path &p);
 	int combine(const vector<int32_t> &v, double w, int c);
+	int size();
 
 private:
 	int add_new_path(const vector<int32_t> &v, double w, int c);

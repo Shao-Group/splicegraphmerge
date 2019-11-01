@@ -16,10 +16,12 @@ public:
 public:
 	split_interval_map imap;
 	map<PI32, DI> emap;
-	phasing_path pmap;
+	map<vector<int32_t>, DI> pmap;
+	//phasing_path pmap;
 	vector<int32_t> spos;
 	int num_combined;
 	string chrm;
+	char strand;
 
 	map<int32_t, int> lindex;
 	map<int32_t, int> rindex;
@@ -42,7 +44,7 @@ public:
 	int build_edges();
 	int build_paths();
 
-	int build(istream &is, const string &chrm);
+	int build(istream &is, const string &chrm, char c);
 	int write(ostream &os, int index, bool headers = false);
 	int write(ostream &os);
 	int print(int index);

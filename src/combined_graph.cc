@@ -9,7 +9,9 @@ combined_graph::combined_graph()
 int combined_graph::combine(const combined_graph &gt)
 {
 	if(chrm == "") chrm = gt.chrm;
+	if(strand == '?') strand = gt.strand;
 	assert(gt.chrm == chrm);
+	assert(gt.strand == strand);
 	combine_vertices(gt);
 	combine_edges(gt);
 	combine_paths(gt);
@@ -22,7 +24,7 @@ int combined_graph::combine_vertices(const combined_graph &gt)
 {
 	for(SIMI it = gt.imap.begin(); it != gt.imap.end(); it++)
 	{
-		imap += make_pair(it->first, 1);
+		imap += make_pair(it->first, it->second);
 	}
 	return 0;
 }
@@ -51,8 +53,7 @@ int combined_graph::combine_edges(const combined_graph &gt)
 
 int combined_graph::combine_paths(const combined_graph &gt)
 {
-	pmap.combine(gt.pmap);
-	/*
+	//pmap.combine(gt.pmap);
 	for(map<vector<int32_t>, DI>::const_iterator it = gt.pmap.begin(); it != gt.pmap.end(); it++)
 	{
 		const vector<int32_t> &p = it->first;
@@ -70,7 +71,6 @@ int combined_graph::combine_paths(const combined_graph &gt)
 			x->second.second += d.second;
 		}
 	}
-	*/
 	return 0;
 }
 
@@ -108,6 +108,7 @@ int combined_graph::build_combined_splice_graph()
 {
 	gr.clear();
 	gr.chrm = chrm;
+	gr.strand = strand;
 	build_vertices();
 	build_vertex_indices();
 	build_edges();
@@ -133,7 +134,7 @@ int combined_graph::build_vertices()
 		vi.length = upper(it->first) - lower(it->first);
 		vi.lpos = lower(it->first);
 		vi.rpos = upper(it->first);
-		gr.set_vertex_weight(gr.num_vertices() - 1, 1);
+		gr.set_vertex_weight(gr.num_vertices() - 1, it->second);
 		gr.set_vertex_info(gr.num_vertices() - 1, vi);
 	}
 
@@ -243,11 +244,18 @@ int combined_graph::build_edges()
 int combined_graph::build_paths()
 {
 	int n = gr.num_vertices() - 1;
+	/*
 	for(int i = 0; i < pmap.paths.size(); i++)
 	{
 		const vector<int32_t> &v = pmap.paths[i];
 		double w = pmap.weights[i];
 		int c = pmap.counts[i];
+	*/
+	for(map<vector<int32_t>, DI>::iterator it = pmap.begin(); it != pmap.end(); it++)
+	{
+		const vector<int32_t> &v = it->first;
+		double w = it->second.first;
+		int c = it->second.second;
 
 		vector<int> vv;
 		bool fail = false;
@@ -302,9 +310,10 @@ int combined_graph::build_paths()
 	return 0;
 }
 
-int combined_graph::build(istream &is, const string &c)
+int combined_graph::build(istream &is, const string &ch, char st)
 {
-	chrm = c;
+	chrm = ch;
+	strand = st;
 
 	char line[10240];
 	char name[10240];
@@ -326,7 +335,7 @@ int combined_graph::build(istream &is, const string &c)
 			int32_t lpos;
 			int32_t rpos;
 			sstr >> index >> weight >> lpos >> rpos;
-			imap += make_pair(ROI(lpos, rpos), 1);
+			imap += make_pair(ROI(lpos, rpos), (int)(weight));
 
 			if(index > n) n = index;
 			if(vv1.size() <= n) vv1.resize(n + 1);
@@ -352,7 +361,10 @@ int combined_graph::build(istream &is, const string &c)
 			if(x == 0) s = -1;
 			if(y == n) t = -2;
 
-			if(x != 0 && y != n && s < t) spos.push_back(s);
+			if(x != 0 && y != n && s < t)
+			{
+				spos.push_back(s);
+			}
 			if(x != 0 && y != n && s < t) spos.push_back(t);
 
 			PI32 p(s, t);
@@ -400,9 +412,8 @@ int combined_graph::build(istream &is, const string &c)
 			int c;
 			sstr >> w >> c;
 
-			pmap.combine(v, w, c);
+			//pmap.combine(v, w, c);
 
-			/*
 			map<vector<int32_t>, DI>::iterator it = pmap.find(v);
 
 			if(it == pmap.end()) 
@@ -415,7 +426,6 @@ int combined_graph::build(istream &is, const string &c)
 				it->second.first += w;
 				it->second.second += c;
 			}
-			*/
 		}
 		else
 		{
@@ -494,11 +504,19 @@ int combined_graph::write(ostream &os)
 		os << "edge " << ks << " " << kt << " " << w << " " << c << endl;
 	}
 
+	/*
 	for(int i = 0; i < pmap.paths.size(); i++)
 	{
 		const vector<int32_t> &v = pmap.paths[i];
 		double w = pmap.weights[i];
 		int c = pmap.counts[i];
+	*/
+
+	for(map<vector<int32_t>, DI>::iterator it = pmap.begin(); it != pmap.end(); it++)
+	{
+		const vector<int32_t> &v = it->first;
+		double w = it->second.first;
+		int c = it->second.second;
 
 		vector<int> vv;
 		bool fail = false;
@@ -542,6 +560,10 @@ int combined_graph::write(ostream &os)
 				int z = vv.back();
 				for(int j = z + 1; j <= ks; j++) vv.push_back(j);
 			}
+			else
+			{
+				vv.push_back(ks);
+			}
 			vv.push_back(kt);
 		}
 		if(fail == true) continue;
@@ -558,7 +580,7 @@ int combined_graph::write(ostream &os, int index, bool headers)
 	sprintf(name, "graph.%d", index);
 	int n = std::distance(imap.begin(), imap.end()) + 2;
 	int m = emap.size();
-	os << "# " << name << " " << chrm.c_str() << " " << n << " " << m << " " << num_combined << endl;
+	os << "# " << name << " " << chrm.c_str() << " " << n << " " << strand << " " << m << " " << num_combined << endl;
 	if(headers == false)
 	{
 		write(os);
@@ -570,8 +592,8 @@ int combined_graph::write(ostream &os, int index, bool headers)
 int combined_graph::print(int index)
 {
 	PI32 p = get_bounds();
-	printf("combined-graph %d: #combined = %d, chrm = %s, #intervals = %lu, #edges = %lu, #phasing-paths = %lu, boundary = [%d, %d)\n", 
-			index, num_combined, chrm.c_str(), std::distance(imap.begin(), imap.end()), emap.size(), pmap.paths.size(), p.first, p.second);
+	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #intervals = %lu, #edges = %lu, #phasing-paths = %lu, boundary = [%d, %d)\n", 
+			index, num_combined, chrm.c_str(), strand, std::distance(imap.begin(), imap.end()), emap.size(), pmap.size(), p.first, p.second);
 	return 0;
 }
 
@@ -598,8 +620,8 @@ int combined_graph::analyze(int index)
 		total_support += c;
 	}
 
-	printf("analyze-graph %d: %d junctions, %d total-support, %.2lf average-support, chrm = %s, #vertices = %lu, #edges = %lu, #phasing-paths = %lu, boundary = [%d, %d)\n", 
-			index, num_junctions, total_support, total_support * 1.0 / num_junctions, chrm.c_str(), std::distance(imap.begin(), imap.end()), emap.size(), pmap.paths.size(), p.first, p.second);
+	printf("analyze-graph %d: %d junctions, %d total-support, %.2lf average-support, chrm = %s, strand = %c, #vertices = %lu, #edges = %lu, #phasing-paths = %lu, boundary = [%d, %d)\n", 
+			index, num_junctions, total_support, total_support * 1.0 / num_junctions, chrm.c_str(), strand, std::distance(imap.begin(), imap.end()), emap.size(), pmap.size(), p.first, p.second);
 
 	return 0;
 }

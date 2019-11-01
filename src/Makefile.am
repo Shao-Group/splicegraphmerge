@@ -1,7 +1,7 @@
 bin_PROGRAMS = splicegraphmerge
 
-#splicegraphmerge_CPPFLAGS = -pg
-#splicegraphmerge_LDFLAGS = -pg
+splicegraphmerge_CPPFLAGS = -pg
+splicegraphmerge_LDFLAGS = -pg
 
 splicegraphmerge_SOURCES = splice_graph.h splice_graph.cc \
 						   vertex_info.h vertex_info.cc \
