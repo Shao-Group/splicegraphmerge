@@ -406,6 +406,8 @@ int combined_graph::build(istream &is, const string &ch, char st)
 				//if(x != 0 && y != n && s < t) spos.push_back(t);
 				v.push_back(s);
 				v.push_back(t);
+
+				x = y;
 			}
 
 			double w;
@@ -415,6 +417,8 @@ int combined_graph::build(istream &is, const string &ch, char st)
 			//pmap.combine(v, w, c);
 
 			map<vector<int32_t>, DI>::iterator it = pmap.find(v);
+
+			//for(int i = 0; i < v.size(); i++) printf("%d, ", v[i]); printf("\n");
 
 			if(it == pmap.end()) 
 			{
@@ -519,6 +523,13 @@ int combined_graph::write(ostream &os)
 		int c = it->second.second;
 
 		vector<int> vv;
+
+		/*
+		printf("-----\n");
+		for(int i = 0; i < v.size(); i++) printf("%d, ", v[i]);
+		printf("\n");
+		*/
+
 		bool fail = false;
 		for(int k = 0; k < v.size() / 2; k++)
 		{
@@ -555,6 +566,8 @@ int combined_graph::write(ostream &os)
 
 			if(fail == true) break;
 
+			//printf("s = %d, t = %d, ks = %d, kt = %d\n", s, t, ks, kt);
+
 			if(vv.size() >= 1)
 			{
 				int z = vv.back();
@@ -567,6 +580,12 @@ int combined_graph::write(ostream &os)
 			vv.push_back(kt);
 		}
 		if(fail == true) continue;
+
+		/*
+		for(int i = 0; i < vv.size(); i++) printf("%d, ", vv[i]); printf("\n");
+		printf("=====\n");
+		*/
+
 		os << "path " << vv.size();
 		for(int i = 0; i < vv.size(); i++) os << " " << vv[i];
 		os << " " << w << " " << c << endl;
