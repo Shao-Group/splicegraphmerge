@@ -107,10 +107,14 @@ int incubator::merge()
 			for(int xj = xi + 1; xj < v.size(); xj++)
 			{
 				int j = v[xj];
-				//int c = gset[j].get_overlapped_splice_positions(gset[i].spos);
-				//if(c < min_overlapped_splice_position) continue;
 				if(gset[i].chrm != gset[j].chrm) continue;
 				if(gset[i].strand != gset[j].strand) continue;
+
+				int c = gset[j].get_overlapped_splice_positions(gset[i].spos);
+				// TODO parameter
+				double r1 = c * 1.0 / gset[i].spos.size();
+				double r2 = c * 1.0 / gset[j].spos.size();
+				if(r1 < 0.4 && r2 < 0.4) continue;
 				gr.add_edge(i, j);
 			}
 		}

@@ -380,7 +380,7 @@ int combined_graph::build(istream &is, const string &ch, char st)
 				it->second.second += c;
 			}
 		}
-		else if(string(name) == "path" || string(name) == "topo")
+		else if(string(name) == "path" || string(name) == "pred")
 		{
 			vector<int32_t> v;
 			int z;
@@ -422,7 +422,7 @@ int combined_graph::build(istream &is, const string &ch, char st)
 
 			if(it == pmap.end()) 
 			{
-				if(string(name) == "topo") pmap.insert(pair<vector<int32_t>, DI>(v, DI(w, 0)));
+				if(string(name) == "pred") pmap.insert(pair<vector<int32_t>, DI>(v, DI(w, 1)));
 				if(string(name) == "path") pmap.insert(pair<vector<int32_t>, DI>(v, DI(w, c)));
 			}
 			else 
@@ -435,7 +435,6 @@ int combined_graph::build(istream &is, const string &ch, char st)
 		{
 			break;
 		}
-
 	}
 
 	sort(spos.begin(), spos.end());
@@ -540,7 +539,6 @@ int combined_graph::write(ostream &os)
 			int kt = -1;
 			if(s == -1) 
 			{
-				fail = true;
 				ks = 0;
 			}
 			else
@@ -554,7 +552,6 @@ int combined_graph::write(ostream &os)
 
 			if(t == -2)
 			{
-				fail = true;
 				kt = id;
 			}
 			else
