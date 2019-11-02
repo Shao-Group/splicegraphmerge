@@ -64,7 +64,7 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 	gset.insert(gset.end(), vc2.begin(), vc2.end());
 
 	merge();
-	printf("merge final with %lu (%lu/%lu) combined-graphs for files [%d, %d)\n", gset.size(), vc1.size(), vc2.size(), low, high);
+	printf("merge final with %lu (%lu/%lu) combined-graphs for files [%d, %d]\n", gset.size(), vc1.size(), vc2.size(), low, high - 1);
 
 	if(mdir != "" && high - low >= 10)
 	{
