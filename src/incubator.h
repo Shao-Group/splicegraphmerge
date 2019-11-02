@@ -15,7 +15,6 @@ public:
 
 public:
 	vector<combined_graph> gset;			// graph set
-	interval_set_map ism;					// interval map
 	MISI mis;								// splice map
 	vector<bool> merged;					// whether gset[k] is merged
 	string mdir;							// output dir
@@ -27,8 +26,6 @@ public:
 
 	int merge();
 	int merge_component(const set<int> &s);
-
-	int build_interval_map();
 	int build_splice_map();
 
 	// write and print
@@ -39,7 +36,6 @@ public:
 	int analyze(const string &file);
 };
 
-int load(const string &file, vector<splice_graph> &vs);
 int load(const string &file, vector<combined_graph> &vc);
 
 #endif

@@ -13,7 +13,7 @@ splicegraphmerge_SOURCES = splice_graph.h splice_graph.cc \
 						   undirected_graph.cc undirected_graph.h \
 						   vertex_base.cc vertex_base.h \
 						   draw.h draw.cc \
-						   incubator.h incubator.cc \
 						   combined_graph.h combined_graph.cc \
+						   incubator.h incubator.cc \
 						   phasing_path.h phasing_path.cc \
 						   main.cc

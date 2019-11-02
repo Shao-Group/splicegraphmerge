@@ -12,15 +12,18 @@ int combined_graph::combine(const combined_graph &gt)
 	if(strand == '?') strand = gt.strand;
 	assert(gt.chrm == chrm);
 	assert(gt.strand == strand);
-	combine_vertices(gt);
-	combine_edges(gt);
+
+	combine_regions(gt);
+	combine_junctions(gt);
 	combine_paths(gt);
+	combine_start_bounds(gt);
+	combine_end_bounds(gt);
 	combine_splice_positions(gt);
 	num_combined += gt.num_combined;
 	return 0;
 }
 
-int combined_graph::combine_vertices(const combined_graph &gt)
+int combined_graph::combine_regions(const combined_graph &gt)
 {
 	for(SIMI it = gt.imap.begin(); it != gt.imap.end(); it++)
 	{
@@ -29,18 +32,18 @@ int combined_graph::combine_vertices(const combined_graph &gt)
 	return 0;
 }
 
-int combined_graph::combine_edges(const combined_graph &gt)
+int combined_graph::combine_junctions(const combined_graph &gt)
 {
-	for(map<PI32, DI>::const_iterator it = gt.emap.begin(); it != gt.emap.end(); it++)
+	for(map<PI32, DI>::const_iterator it = gt.junctions.begin(); it != gt.junctions.end(); it++)
 	{
 		PI32 p = it->first;
 		DI d = it->second;
 
-		map<PI32, DI>::iterator x = emap.find(p);
+		map<PI32, DI>::iterator x = junctions.find(p);
 
-		if(x == emap.end())
+		if(x == junctions.end())
 		{
-			emap.insert(pair<PI32, DI>(p, d));
+			junctions.insert(pair<PI32, DI>(p, d));
 		}
 		else 
 		{
@@ -53,17 +56,61 @@ int combined_graph::combine_edges(const combined_graph &gt)
 
 int combined_graph::combine_paths(const combined_graph &gt)
 {
-	//pmap.combine(gt.pmap);
-	for(map<vector<int32_t>, DI>::const_iterator it = gt.pmap.begin(); it != gt.pmap.end(); it++)
+	//paths.combine(gt.paths);
+	for(map<vector<int32_t>, DI>::const_iterator it = gt.paths.begin(); it != gt.paths.end(); it++)
 	{
 		const vector<int32_t> &p = it->first;
 		DI d = it->second;
 
-		map<vector<int32_t>, DI>::iterator x = pmap.find(p);
+		map<vector<int32_t>, DI>::iterator x = paths.find(p);
 
-		if(x == pmap.end())
+		if(x == paths.end())
 		{
-			pmap.insert(pair<vector<int32_t>, DI>(p, d));
+			paths.insert(pair<vector<int32_t>, DI>(p, d));
+		}
+		else 
+		{
+			x->second.first += d.first;
+			x->second.second += d.second;
+		}
+	}
+	return 0;
+}
+
+int combined_graph::combine_start_bounds(const combined_graph &gt)
+{
+	for(map<int32_t, DI>::const_iterator it = gt.sbounds.begin(); it != gt.sbounds.end(); it++)
+	{
+		int32_t p = it->first;
+		DI d = it->second;
+
+		map<int32_t, DI>::iterator x = sbounds.find(p);
+
+		if(x == sbounds.end())
+		{
+			sbounds.insert(pair<int32_t, DI>(p, d));
+		}
+		else 
+		{
+			x->second.first += d.first;
+			x->second.second += d.second;
+		}
+	}
+	return 0;
+}
+
+int combined_graph::combine_end_bounds(const combined_graph &gt)
+{
+	for(map<int32_t, DI>::const_iterator it = gt.tbounds.begin(); it != gt.tbounds.end(); it++)
+	{
+		int32_t p = it->first;
+		DI d = it->second;
+
+		map<int32_t, DI>::iterator x = tbounds.find(p);
+
+		if(x == tbounds.end())
+		{
+			tbounds.insert(pair<int32_t, DI>(p, d));
 		}
 		else 
 		{
@@ -76,238 +123,18 @@ int combined_graph::combine_paths(const combined_graph &gt)
 
 int combined_graph::combine_splice_positions(const combined_graph &gt)
 {
-	vector<int32_t> vv(gt.spos.size() + spos.size(), 0);
-	vector<int32_t>::iterator it = set_union(gt.spos.begin(), gt.spos.end(), spos.begin(), spos.end(), vv.begin());
+	vector<int32_t> vv(gt.splices.size() + splices.size(), 0);
+	vector<int32_t>::iterator it = set_union(gt.splices.begin(), gt.splices.end(), splices.begin(), splices.end(), vv.begin());
 	vv.resize(it - vv.begin());
-	spos = vv;
+	splices = vv;
 	return 0;
 }
 
 int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v)
 {
 	vector<int32_t> vv(v.size(), 0);
-	vector<int32_t>::iterator it = set_intersection(v.begin(), v.end(), spos.begin(), spos.end(), vv.begin());
+	vector<int32_t>::iterator it = set_intersection(v.begin(), v.end(), splices.begin(), splices.end(), vv.begin());
 	return it - vv.begin();
-}
-
-PI32 combined_graph::get_bounds()
-{
-	if(imap.size() == 0) return PI32(-1, -1);
-
-	SIMI it = imap.begin();
-	int32_t p1 = lower(it->first);
-
-	it = imap.end();
-	it--;
-	int32_t p2 = upper(it->first);
-
-	return PI32(p1, p2);
-}
-
-int combined_graph::build_combined_splice_graph()
-{
-	gr.clear();
-	gr.chrm = chrm;
-	gr.strand = strand;
-	build_vertices();
-	build_vertex_indices();
-	build_edges();
-	build_paths();
-	return 0;
-}
-
-int combined_graph::build_vertices()
-{
-	if(imap.size() == 0) return 0;
-
-	gr.add_vertex();
-	vertex_info vi0;
-	SIMI it = imap.begin();
-	vi0.lpos = lower(it->first);
-	vi0.rpos = lower(it->first);
-	gr.set_vertex_info(0, vi0);
-
-	for(it = imap.begin(); it != imap.end(); it++)
-	{
-		gr.add_vertex();
-		vertex_info vi;
-		vi.length = upper(it->first) - lower(it->first);
-		vi.lpos = lower(it->first);
-		vi.rpos = upper(it->first);
-		gr.set_vertex_weight(gr.num_vertices() - 1, it->second);
-		gr.set_vertex_info(gr.num_vertices() - 1, vi);
-	}
-
-	it = imap.end();
-	it--;
-	vertex_info vin;
-	vin.lpos = upper(it->first);
-	vin.rpos = upper(it->first);
-	gr.add_vertex();
-	gr.set_vertex_weight(gr.num_vertices() - 1, 1);
-	gr.set_vertex_info(gr.num_vertices() - 1, vin);
-	return 0;
-}
-
-int combined_graph::build_vertex_indices()
-{
-	lindex.clear();
-	rindex.clear();
-	int n = gr.num_vertices();
-	for(int k = 1; k < n - 1; k++)
-	{
-		vertex_info vi = gr.get_vertex_info(k);
-		int32_t l = vi.lpos;
-		int32_t r = vi.rpos;
-		assert(l < r);
-		assert(lindex.find(l) == lindex.end());
-		assert(rindex.find(r) == rindex.end());
-		lindex.insert(pair<int32_t, int>(l, k));
-		rindex.insert(pair<int32_t, int>(r, k));
-
-		//printf("add %d -> %d to lindex\n", l, k);
-		//printf("add %d -> %d to rindex\n", r, k);
-	}
-
-	vertex_info vi1 = gr.get_vertex_info(0);
-	vertex_info vi2 = gr.get_vertex_info(n - 1);
-
-	assert(rindex.find(vi1.rpos) == rindex.end());
-	assert(lindex.find(vi2.lpos) == lindex.end());
-	rindex.insert(pair<int32_t, int>(vi1.rpos, 0));
-	lindex.insert(pair<int32_t, int>(vi2.lpos, n - 1));
-
-	//printf("add %d -> %d to rindex\n", vi1.rpos, 0);
-	//printf("add %d -> %d to lindex\n", vi2.lpos, n - 1);
-	return 0;
-}
-
-int combined_graph::build_edges()
-{
-	int n = gr.num_vertices() - 1;
-	for(map<PI32, DI>::iterator it = emap.begin(); it != emap.end(); it++)
-	{
-		int32_t s = it->first.first;
-		int32_t t = it->first.second;
-		double w = it->second.first;
-		int c = it->second.second;
-
-		int ks = -1;
-		int kt = -1;
-		if(s == -1) 
-		{
-			ks = 0;
-		}
-		else
-		{
-			map<int32_t, int>::iterator xs = rindex.find(s);
-			assert(xs != rindex.end());
-			ks = xs->second;
-		}
-
-		if(t == -2)
-		{
-			kt = n;
-		}
-		else
-		{
-			map<int32_t, int>::iterator xt = lindex.find(t);
-			assert(xt != lindex.end());
-			kt = xt->second;
-		}
-
-		/*
-		if(xt == lindex.end())
-		{
-			for(int k = 0; k < gr.num_vertices(); k++)
-			{
-				vertex_info vi = gr.get_vertex_info(k);
-				printf("node %d: [%d, %d)\n", k, vi.lpos, vi.rpos);
-			}
-			printf("now test edge %d -> %d\n", s, t);
-		}
-		*/
-
-		PEB p = gr.edge(ks, kt);
-		assert(p.second == false);
-
-		edge_descriptor e = gr.add_edge(ks, kt);
-		gr.set_edge_weight(e, w);
-		edge_info ei;
-		ei.type = c;
-		gr.set_edge_info(e, ei);
-	}
-
-	return 0;
-}
-
-int combined_graph::build_paths()
-{
-	int n = gr.num_vertices() - 1;
-	/*
-	for(int i = 0; i < pmap.paths.size(); i++)
-	{
-		const vector<int32_t> &v = pmap.paths[i];
-		double w = pmap.weights[i];
-		int c = pmap.counts[i];
-	*/
-	for(map<vector<int32_t>, DI>::iterator it = pmap.begin(); it != pmap.end(); it++)
-	{
-		const vector<int32_t> &v = it->first;
-		double w = it->second.first;
-		int c = it->second.second;
-
-		vector<int> vv;
-		bool fail = false;
-		for(int k = 0; k < v.size() / 2; k++)
-		{
-			int32_t s = v[2 * k + 0];
-			int32_t t = v[2 * k + 1];
-
-			int ks = -1;
-			int kt = -1;
-			if(s == -1) 
-			{
-				fail = true;
-				ks = 0;
-			}
-			else
-			{
-				map<int32_t, int>::iterator xs = rindex.find(s);
-				if(xs == rindex.end()) fail = true;
-				else ks = xs->second;
-			}
-
-			if(fail == true) break;
-
-			if(t == -2)
-			{
-				fail = true;
-				kt = n;
-			}
-			else
-			{
-				map<int32_t, int>::iterator xt = lindex.find(t);
-				if(xt == lindex.end()) fail = true;
-				else kt = xt->second;
-			}
-
-			if(fail == true) break;
-
-			if(vv.size() >= 1)
-			{
-				int z = vv.back();
-				for(int j = z + 1; j < ks; j++) vv.push_back(j);
-			}
-			vv.push_back(ks);
-			vv.push_back(kt);
-		}
-
-		assert(hs.find(vv) == hs.end());
-		hs.insert(pair<vector<int>, int>(vv, (int)w));
-	}
-
-	return 0;
 }
 
 int combined_graph::build(istream &is, const string &ch, char st)
@@ -318,61 +145,32 @@ int combined_graph::build(istream &is, const string &ch, char st)
 	char line[10240];
 	char name[10240];
 
-	int n = -1;
-	vector<int32_t> vv1;
-	vector<int32_t> vv2;
+	set<int32_t> sp(splices.begin(), splices.end());
 	while(is.getline(line, 10240, '\n'))
 	{
 		stringstream sstr(line);
 		if(string(line).length() == 0) break;
 		
 		sstr >> name;
-
-		if(string(name) == "node")
+		if(string(name) == "region")
 		{
-			int index;
 			double weight;
 			int32_t lpos;
 			int32_t rpos;
-			sstr >> index >> weight >> lpos >> rpos;
+			sstr >> lpos >> rpos >> weight;
 			imap += make_pair(ROI(lpos, rpos), (int)(weight));
-
-			if(index > n) n = index;
-			if(vv1.size() <= n) vv1.resize(n + 1);
-			if(vv2.size() <= n) vv2.resize(n + 1);
-
-			vv1[index] = lpos;
-			vv2[index] = rpos;
 		}
-		else if(string(name) == "edge")
+		else if(string(name) == "sbound")
 		{
-			int x, y;
+			int32_t p;
 			double w;
 			int c;
-			sstr >> x >> y >> w >> c;
+			sstr >> p >> w >> c;
 
-			assert(x != y);
-			assert(x >= 0 && x <= n);
-			assert(y >= 0 && y <= n);
-
-			int32_t s = vv2[x];
-			int32_t t = vv1[y];
-
-			if(x == 0) s = -1;
-			if(y == n) t = -2;
-
-			if(x != 0 && y != n && s < t)
+			map<int32_t, DI>::iterator it = sbounds.find(p);
+			if(it == sbounds.end()) 
 			{
-				spos.push_back(s);
-			}
-			if(x != 0 && y != n && s < t) spos.push_back(t);
-
-			PI32 p(s, t);
-			map<PI32, DI>::iterator it = emap.find(p);
-
-			if(it == emap.end()) 
-			{
-				emap.insert(pair<PI32, DI>(p, DI(w, c)));
+				sbounds.insert(pair<int32_t, DI>(p, DI(w, c)));
 			}
 			else 
 			{
@@ -380,50 +178,63 @@ int combined_graph::build(istream &is, const string &ch, char st)
 				it->second.second += c;
 			}
 		}
-		else if(string(name) == "path" || string(name) == "pred")
+		else if(string(name) == "tbound")
 		{
-			vector<int32_t> v;
+			int32_t p;
+			double w;
+			int c;
+			sstr >> p >> w >> c;
+			map<int32_t, DI>::iterator it = tbounds.find(p);
+			if(it == tbounds.end()) 
+			{
+				tbounds.insert(pair<int32_t, DI>(p, DI(w, c)));
+			}
+			else 
+			{
+				it->second.first += w;
+				it->second.second += c;
+			}
+		}
+		else if(string(name) == "junction")
+		{
+			int32_t s, t;
+			double w;
+			int c;
+			sstr >> s >> t >> w >> c;
+
+			assert(s < t);
+			sp.insert(s);
+			sp.insert(t);
+
+			PI32 p(s, t);
+			map<PI32, DI>::iterator it = junctions.find(p);
+
+			if(it == junctions.end()) 
+			{
+				junctions.insert(pair<PI32, DI>(p, DI(w, c)));
+			}
+			else 
+			{
+				it->second.first += w;
+				it->second.second += c;
+			}
+		}
+		else if(string(name) == "path" || string(name) == "phase")
+		{
 			int z;
 			sstr >> z;
-			assert(z >= 1);
-			int x, y;
-			sstr >> x;
-			for(int k = 1; k < z; k++)
-			{
-				sstr >> y;
-
-				assert(x != y);
-				assert(x >= 0 && x <= n);
-				assert(y >= 0 && y <= n);
-
-				int32_t s = vv2[x];
-				int32_t t = vv1[y];
-
-				if(x == 0) s = -1;
-				if(y == n) t = -2;
-
-				//if(x != 0 && y != n && s < t) spos.push_back(s);
-				//if(x != 0 && y != n && s < t) spos.push_back(t);
-				v.push_back(s);
-				v.push_back(t);
-
-				x = y;
-			}
-
+			vector<int32_t> v;
+			v.resize(z);
+			for(int k = 0; k < z; k++) sstr >> v[k];
 			double w;
 			int c;
 			sstr >> w >> c;
 
-			//pmap.combine(v, w, c);
+			map<vector<int32_t>, DI>::iterator it = paths.find(v);
 
-			map<vector<int32_t>, DI>::iterator it = pmap.find(v);
-
-			//for(int i = 0; i < v.size(); i++) printf("%d, ", v[i]); printf("\n");
-
-			if(it == pmap.end()) 
+			if(it == paths.end()) 
 			{
-				if(string(name) == "pred") pmap.insert(pair<vector<int32_t>, DI>(v, DI(w, 1)));
-				if(string(name) == "path") pmap.insert(pair<vector<int32_t>, DI>(v, DI(w, c)));
+				paths.insert(pair<vector<int32_t>, DI>(v, DI(w, 1)));
 			}
 			else 
 			{
@@ -437,9 +248,10 @@ int combined_graph::build(istream &is, const string &ch, char st)
 		}
 	}
 
-	sort(spos.begin(), spos.end());
+	splices.clear();
+	splices.assign(sp.begin(), sp.end());
+	sort(splices.begin(), splices.end());
 	num_combined++;
-
 	return 0;
 }
 
@@ -448,140 +260,45 @@ int combined_graph::write(ostream &os)
 	os<<fixed;
 	os.precision(2);
 
-	PI32 p = get_bounds();
-
-	lindex.clear();
-	rindex.clear();
-
-	int id = 0;
-
-	rindex.insert(pair<int32_t, int>(p.first, 0));
-	os<<"node " << id++ << " "<< 1 << " " << p.first << " " << p.first << endl;
-
 	for(SIMI it = imap.begin(); it != imap.end(); it++)
 	{
 		int32_t l = lower(it->first);
 		int32_t r = upper(it->first);
-		lindex.insert(pair<int32_t, int>(l, id));
-		rindex.insert(pair<int32_t, int>(r, id));
-		os << "node " << id++ << " "<< it->second << " ";
-		os << l << " " << r << endl;
+		os << "region " << l << " " << r << " " << it->second << endl;
 	}
 
-	lindex.insert(pair<int32_t, int>(p.second, id));
-	os<<"node " << id << " "<< 1 << " " << p.second << " " << p.second << endl;
+	for(map<int32_t, DI>::iterator it = sbounds.begin(); it != sbounds.end(); it++)
+	{
+		int32_t p = it->first;
+		double w = it->second.first;
+		int c = it->second.second;
+		os << "sbound " << p << " " << w << " " << c << endl;
+	}
 
-    assert(std::distance(imap.begin(), imap.end()) + 1 == id);
+	for(map<int32_t, DI>::iterator it = tbounds.begin(); it != tbounds.end(); it++)
+	{
+		int32_t p = it->first;
+		double w = it->second.first;
+		int c = it->second.second;
+		os << "tbound " << p << " " << w << " " << c << endl;
+	}
 
-	for(map<PI32, DI>::iterator it = emap.begin(); it != emap.end(); it++)
+	for(map<PI32, DI>::iterator it = junctions.begin(); it != junctions.end(); it++)
 	{
 		int32_t s = it->first.first;
 		int32_t t = it->first.second;
 		double w = it->second.first;
 		int c = it->second.second;
 
-		int ks = -1;
-		int kt = -1;
-		if(s == -1) 
-		{
-			ks = 0;
-		}
-		else
-		{
-			map<int32_t, int>::iterator xs = rindex.find(s);
-			assert(xs != rindex.end());
-			ks = xs->second;
-		}
-
-		if(t == -2)
-		{
-			kt = id;
-		}
-		else
-		{
-			map<int32_t, int>::iterator xt = lindex.find(t);
-			assert(xt != lindex.end());
-			kt = xt->second;
-		}
-
-		os << "edge " << ks << " " << kt << " " << w << " " << c << endl;
+		if(s >= t) continue;
+		os << "junction " << s << " " << t << " " << w << " " << c << endl;
 	}
 
-	/*
-	for(int i = 0; i < pmap.paths.size(); i++)
+	for(map<vector<int32_t>, DI>::iterator it = paths.begin(); it != paths.end(); it++)
 	{
-		const vector<int32_t> &v = pmap.paths[i];
-		double w = pmap.weights[i];
-		int c = pmap.counts[i];
-	*/
-
-	for(map<vector<int32_t>, DI>::iterator it = pmap.begin(); it != pmap.end(); it++)
-	{
-		const vector<int32_t> &v = it->first;
+		const vector<int32_t> &vv = it->first;
 		double w = it->second.first;
 		int c = it->second.second;
-
-		vector<int> vv;
-
-		/*
-		printf("-----\n");
-		for(int i = 0; i < v.size(); i++) printf("%d, ", v[i]);
-		printf("\n");
-		*/
-
-		bool fail = false;
-		for(int k = 0; k < v.size() / 2; k++)
-		{
-			int32_t s = v[2 * k + 0];
-			int32_t t = v[2 * k + 1];
-
-			int ks = -1;
-			int kt = -1;
-			if(s == -1) 
-			{
-				ks = 0;
-			}
-			else
-			{
-				map<int32_t, int>::iterator xs = rindex.find(s);
-				if(xs == rindex.end()) fail = true;
-				else ks = xs->second;
-			}
-
-			if(fail == true) break;
-
-			if(t == -2)
-			{
-				kt = id;
-			}
-			else
-			{
-				map<int32_t, int>::iterator xt = lindex.find(t);
-				if(xt == lindex.end()) fail = true;
-				else kt = xt->second;
-			}
-
-			if(fail == true) break;
-
-			//printf("s = %d, t = %d, ks = %d, kt = %d\n", s, t, ks, kt);
-
-			if(vv.size() >= 1)
-			{
-				int z = vv.back();
-				for(int j = z + 1; j <= ks; j++) vv.push_back(j);
-			}
-			else
-			{
-				vv.push_back(ks);
-			}
-			vv.push_back(kt);
-		}
-		if(fail == true) continue;
-
-		/*
-		for(int i = 0; i < vv.size(); i++) printf("%d, ", vv[i]); printf("\n");
-		printf("=====\n");
-		*/
 
 		os << "path " << vv.size();
 		for(int i = 0; i < vv.size(); i++) os << " " << vv[i];
@@ -594,9 +311,9 @@ int combined_graph::write(ostream &os, int index, bool headers)
 {
 	char name[10240];
 	sprintf(name, "graph.%d", index);
-	int n = std::distance(imap.begin(), imap.end()) + 2;
-	int m = emap.size();
-	os << "# " << name << " " << chrm.c_str() << " " << n << " " << strand << " " << m << " " << num_combined << endl;
+	int n = std::distance(imap.begin(), imap.end());
+	os << "# " << name << " " << chrm.c_str() << " " << strand << " " << num_combined;
+	os << " " << n << " " << sbounds.size() << " " << tbounds.size() << " " << junctions.size() << " " << paths.size() << endl;
 	if(headers == false)
 	{
 		write(os);
@@ -605,39 +322,24 @@ int combined_graph::write(ostream &os, int index, bool headers)
 	return 0;
 }
 
+PI32 combined_graph::get_bounds()
+{
+	if(sbounds.size() == 0 || tbounds.size() == 0) return PI32(-1, -1);
+	map<int32_t, DI>::iterator x1 = sbounds.begin();
+	map<int32_t, DI>::iterator x2 = tbounds.end();
+	x2--;
+	return PI32(x1->first, x2->first);
+}
+
 int combined_graph::print(int index)
 {
 	PI32 p = get_bounds();
-	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #intervals = %lu, #edges = %lu, #phasing-paths = %lu, boundary = [%d, %d)\n", 
-			index, num_combined, chrm.c_str(), strand, std::distance(imap.begin(), imap.end()), emap.size(), pmap.size(), p.first, p.second);
+	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-paths = %lu, boundary = [%d, %d)\n", 
+			index, num_combined, chrm.c_str(), strand, std::distance(imap.begin(), imap.end()), sbounds.size(), tbounds.size(), junctions.size(), paths.size(), p.first, p.second);
 	return 0;
 }
 
 int combined_graph::analyze(int index)
 {
-	int num_junctions = 0;
-	int total_support = 0;
-
-	PI32 p = get_bounds();
-	for(map<PI32, DI>::iterator it = emap.begin(); it != emap.end(); it++)
-	{
-		int32_t s = it->first.first;
-		int32_t t = it->first.second;
-
-		if(s == p.first) continue;
-		if(t == p.second) continue;
-
-		if(s >= t) continue;
-
-		double w = it->second.first;
-		int c = it->second.second;
-
-		num_junctions++;
-		total_support += c;
-	}
-
-	printf("analyze-graph %d: %d junctions, %d total-support, %.2lf average-support, chrm = %s, strand = %c, #vertices = %lu, #edges = %lu, #phasing-paths = %lu, boundary = [%d, %d)\n", 
-			index, num_junctions, total_support, total_support * 1.0 / num_junctions, chrm.c_str(), strand, std::distance(imap.begin(), imap.end()), emap.size(), pmap.size(), p.first, p.second);
-
 	return 0;
 }

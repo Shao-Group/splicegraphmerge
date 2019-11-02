@@ -64,7 +64,12 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 	gset.insert(gset.end(), vc2.begin(), vc2.end());
 
 	merge();
-	printf("merge final with %lu (%lu/%lu) combined-graphs for files [%d, %d]\n", gset.size(), vc1.size(), vc2.size(), low, high - 1);
+	int n = 0;
+	for(int k = 0; k < merged.size(); k++)
+	{
+		if(merged[k] == false) n++;
+	}
+	printf("merge final with %d <- %lu + %lu combined-graphs for files [%d, %d]\n", n, vc1.size(), vc2.size(), low, high - 1);
 
 	if(mdir != "" && high - low >= 10)
 	{
@@ -88,13 +93,6 @@ int incubator::merge()
 	undirected_graph gr;
 	for(int k = 0; k < gset.size(); k++) gr.add_vertex();
 
-	/*
-	build_interval_map();
-	for(ISMI it = ism.begin(); it != ism.end(); it++)
-	{
-		set<int> s = it->second;
-		*/
-
 	build_splice_map();
 
 	for(MISI::iterator mi = mis.begin(); mi != mis.end(); mi++)
@@ -110,17 +108,15 @@ int incubator::merge()
 				if(gset[i].chrm != gset[j].chrm) continue;
 				if(gset[i].strand != gset[j].strand) continue;
 
-				int c = gset[j].get_overlapped_splice_positions(gset[i].spos);
+				int c = gset[j].get_overlapped_splice_positions(gset[i].splices);
 				// TODO parameter
-				double r1 = c * 1.0 / gset[i].spos.size();
-				double r2 = c * 1.0 / gset[j].spos.size();
+				double r1 = c * 1.0 / gset[i].splices.size();
+				double r2 = c * 1.0 / gset[j].splices.size();
 				if(r1 < 0.4 || r2 < 0.4) continue;
 				gr.add_edge(i, j);
 			}
 		}
 	}
-
-	//}
 
 	vector< set<int> > vs = gr.compute_connected_components();
 
@@ -160,7 +156,6 @@ int incubator::write(const string &file, bool headers)
 	for(int k = 0; k < gset.size(); k++)
 	{
 		if(merged[k] == true) continue;
-		//gset[k].build_combined_splice_graph();
 		gset[k].write(fout, k, headers);
 	}
 	fout.close();
@@ -172,9 +167,9 @@ int incubator::build_splice_map()
 	mis.clear();
 	for(int k = 0; k < gset.size(); k++)
 	{
-		for(int i = 0; i < gset[k].spos.size(); i++)
+		for(int i = 0; i < gset[k].splices.size(); i++)
 		{
-			int32_t p = gset[k].spos[i];
+			int32_t p = gset[k].splices[i];
 			MISI::iterator it = mis.find(p);
 			if(it == mis.end())
 			{
@@ -187,19 +182,6 @@ int incubator::build_splice_map()
 				it->second.insert(k);
 			}
 		}
-	}
-	return 0;
-}
-
-int incubator::build_interval_map()
-{
-	ism.clear();
-	for(int k = 0; k < gset.size(); k++)
-	{
-		PI32 p = gset[k].get_bounds();
-		set<int> s;
-		s.insert(k);
-		ism += make_pair(interval32(p.first, p.second), s); 
 	}
 	return 0;
 }
@@ -218,37 +200,6 @@ int incubator::analyze(const string &file)
 	{
 		vc[k].analyze(k);
 	}
-	return 0;
-}
-
-int load(const string &file, vector<splice_graph> &v)
-{
-	ifstream fin(file.c_str());
-	if(fin.fail())
-	{
-		printf("could not load file %s\n", file.c_str());
-		exit(0);
-	}
-
-	char line[10240];
-	char gid[10240];
-	char chrm[10240];
-	char tmp[1024];
-	char strand[1024];
-	int nodes;
-
-	while(fin.getline(line, 10240, '\n'))
-	{
-		if(line[0] != '#') continue;
-		stringstream sstr(line);
-		sstr >> tmp >> gid >> chrm >> nodes >> strand;
-
-		splice_graph gr;
-		gr.build(fin, gid, chrm);
-		v.push_back(gr);
-	}
-	
-	fin.close();
 	return 0;
 }
 
@@ -272,13 +223,12 @@ int load(const string &file, vector<combined_graph> &vc)
 	{
 		if(line[0] != '#') continue;
 		stringstream sstr(line);
-		sstr >> tmp >> gid >> chrm >> nodes >> strand;
+		sstr >> tmp >> gid >> chrm >> strand;
 
 		combined_graph gr;
 		gr.build(fin, chrm, strand[0]);
 		vc.push_back(gr);
 	}
-	
 	fin.close();
 	return 0;
 }
