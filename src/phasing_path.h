@@ -1,6 +1,7 @@
 #ifndef __PHASING_PATH_H__
 #define __PHASING_PATH_H__
 
+#include <stdint.h>
 #include <vector>
 #include <map>
 #include <set>
