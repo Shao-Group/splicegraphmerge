@@ -225,7 +225,7 @@ int load(const string &file, vector<combined_graph> &vc)
 		stringstream sstr(line);
 		sstr >> tmp >> gid >> chrm >> strand;
 
-		combined_graph gr;
+		combined_graph gr(line);
 		gr.build(fin, chrm, strand[0]);
 		vc.push_back(gr);
 	}

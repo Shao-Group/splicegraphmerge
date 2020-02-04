@@ -1,8 +1,9 @@
 #include "combined_graph.h"
 #include "draw.h"
 
-combined_graph::combined_graph()
+combined_graph::combined_graph(const string &line)
 {
+	hline = line;
 	num_combined = 0;
 }
 
@@ -20,6 +21,10 @@ int combined_graph::combine(const combined_graph &gt)
 	combine_end_bounds(gt);
 	combine_splice_positions(gt);
 	num_combined += gt.num_combined;
+
+	if(gt.children.size() == 0) children.push_back(gt);
+	if(children.size() == 0) children.push_back(*this);
+	children.insert(children.end(), gt.children.begin(), gt.children.end());
 	return 0;
 }
 
@@ -314,9 +319,18 @@ int combined_graph::write(ostream &os, int index, bool headers)
 	int n = std::distance(imap.begin(), imap.end());
 	os << "# " << name << " " << chrm.c_str() << " " << strand << " " << num_combined;
 	os << " " << n << " " << sbounds.size() << " " << tbounds.size() << " " << junctions.size() << " " << paths.size() << endl;
-	if(headers == false)
+	if(headers == true) return 0;
+
+	// write current graph
+	write(os);
+	os << endl;
+
+	// write children
+	for(int k = 0; k < children.size(); k++)
 	{
-		write(os);
+		combined_graph &cb = children[k];
+		os << cb.hline.c_str() << endl;
+		cb.write(os);
 		os << endl;
 	}
 	return 0;
@@ -334,8 +348,8 @@ PI32 combined_graph::get_bounds()
 int combined_graph::print(int index)
 {
 	PI32 p = get_bounds();
-	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-paths = %lu, boundary = [%d, %d)\n", 
-			index, num_combined, chrm.c_str(), strand, std::distance(imap.begin(), imap.end()), sbounds.size(), tbounds.size(), junctions.size(), paths.size(), p.first, p.second);
+	printf("combined-graph %d: #combined = %d, children = %lu, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-paths = %lu, boundary = [%d, %d)\n", 
+			index, num_combined, children.size(), chrm.c_str(), strand, std::distance(imap.begin(), imap.end()), sbounds.size(), tbounds.size(), junctions.size(), paths.size(), p.first, p.second);
 	return 0;
 }
 

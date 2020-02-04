@@ -9,7 +9,7 @@ typedef pair<double, int> DI;
 class combined_graph
 {
 public:
-	combined_graph();
+	combined_graph(const string &line);
 
 public:
 	split_interval_map imap;
@@ -21,6 +21,9 @@ public:
 	int num_combined;
 	string chrm;
 	char strand;
+	string hline;
+
+	vector<combined_graph> children;
 
 public:
 	int combine(const combined_graph &gt);
