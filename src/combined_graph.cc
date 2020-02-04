@@ -22,8 +22,8 @@ int combined_graph::combine(const combined_graph &gt)
 	combine_splice_positions(gt);
 	num_combined += gt.num_combined;
 
-	if(gt.children.size() == 0) children.push_back(gt);
 	if(children.size() == 0) children.push_back(*this);
+	if(gt.children.size() == 0) children.push_back(gt);
 	children.insert(children.end(), gt.children.begin(), gt.children.end());
 	return 0;
 }
