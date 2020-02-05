@@ -9,6 +9,10 @@ combined_graph::combined_graph(const string &line)
 
 int combined_graph::combine(const combined_graph &gt)
 {
+	if(children.size() == 0) children.push_back(*this);
+	if(gt.children.size() == 0) children.push_back(gt);
+	children.insert(children.end(), gt.children.begin(), gt.children.end());
+
 	if(chrm == "") chrm = gt.chrm;
 	if(strand == '?') strand = gt.strand;
 	assert(gt.chrm == chrm);
@@ -21,10 +25,6 @@ int combined_graph::combine(const combined_graph &gt)
 	combine_end_bounds(gt);
 	combine_splice_positions(gt);
 	num_combined += gt.num_combined;
-
-	if(children.size() == 0) children.push_back(*this);
-	if(gt.children.size() == 0) children.push_back(gt);
-	children.insert(children.end(), gt.children.begin(), gt.children.end());
 	return 0;
 }
 
@@ -257,6 +257,7 @@ int combined_graph::build(istream &is, const string &ch, char st)
 	splices.assign(sp.begin(), sp.end());
 	sort(splices.begin(), splices.end());
 	num_combined++;
+
 	return 0;
 }
 
