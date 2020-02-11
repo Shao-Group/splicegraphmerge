@@ -17,6 +17,7 @@ public:
 	map<int32_t, DI> sbounds;
 	map<int32_t, DI> tbounds;
 	vector<int32_t> splices;
+	map<vector<int32_t>, DI> phase;
 	map<vector<int32_t>, DI> paths;
 	int num_combined;
 	string chrm;
@@ -32,6 +33,7 @@ public:
 	int combine_start_bounds(const combined_graph &gt);
 	int combine_end_bounds(const combined_graph &gt);
 	int combine_paths(const combined_graph &gt);
+	int combine_phase(const combined_graph &gt);
 	int combine_splice_positions(const combined_graph &gt);
 
 	PI32 get_bounds();

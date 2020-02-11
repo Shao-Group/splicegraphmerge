@@ -20,6 +20,7 @@ int combined_graph::combine(const combined_graph &gt)
 
 	combine_regions(gt);
 	combine_junctions(gt);
+	combine_phase(gt);
 	combine_paths(gt);
 	combine_start_bounds(gt);
 	combine_end_bounds(gt);
@@ -59,9 +60,30 @@ int combined_graph::combine_junctions(const combined_graph &gt)
 	return 0;
 }
 
+int combined_graph::combine_phase(const combined_graph &gt)
+{
+	for(map<vector<int32_t>, DI>::const_iterator it = gt.phase.begin(); it != gt.phase.end(); it++)
+	{
+		const vector<int32_t> &p = it->first;
+		DI d = it->second;
+
+		map<vector<int32_t>, DI>::iterator x = phase.find(p);
+
+		if(x == phase.end())
+		{
+			phase.insert(pair<vector<int32_t>, DI>(p, d));
+		}
+		else 
+		{
+			x->second.first += d.first;
+			x->second.second += d.second;
+		}
+	}
+	return 0;
+}
+
 int combined_graph::combine_paths(const combined_graph &gt)
 {
-	//paths.combine(gt.paths);
 	for(map<vector<int32_t>, DI>::const_iterator it = gt.paths.begin(); it != gt.paths.end(); it++)
 	{
 		const vector<int32_t> &p = it->first;
@@ -224,7 +246,30 @@ int combined_graph::build(istream &is, const string &ch, char st)
 				it->second.second += c;
 			}
 		}
-		else if(string(name) == "path" || string(name) == "phase")
+		else if(string(name) == "phase")
+		{
+			int z;
+			sstr >> z;
+			vector<int32_t> v;
+			v.resize(z);
+			for(int k = 0; k < z; k++) sstr >> v[k];
+			double w;
+			int c;
+			sstr >> w >> c;
+
+			map<vector<int32_t>, DI>::iterator it = phase.find(v);
+
+			if(it == phase.end()) 
+			{
+				phase.insert(pair<vector<int32_t>, DI>(v, DI(w, 1)));
+			}
+			else 
+			{
+				it->second.first += w;
+				it->second.second += c;
+			}
+		}
+		else if(string(name) == "path")
 		{
 			int z;
 			sstr >> z;
@@ -247,6 +292,7 @@ int combined_graph::build(istream &is, const string &ch, char st)
 				it->second.second += c;
 			}
 		}
+
 		else
 		{
 			break;
@@ -300,6 +346,17 @@ int combined_graph::write(ostream &os)
 		os << "junction " << s << " " << t << " " << w << " " << c << endl;
 	}
 
+	for(map<vector<int32_t>, DI>::iterator it = phase.begin(); it != phase.end(); it++)
+	{
+		const vector<int32_t> &vv = it->first;
+		double w = it->second.first;
+		int c = it->second.second;
+
+		os << "phase " << vv.size();
+		for(int i = 0; i < vv.size(); i++) os << " " << vv[i];
+		os << " " << w << " " << c << endl;
+	}
+
 	for(map<vector<int32_t>, DI>::iterator it = paths.begin(); it != paths.end(); it++)
 	{
 		const vector<int32_t> &vv = it->first;
@@ -319,7 +376,7 @@ int combined_graph::write(ostream &os, int index, bool headers)
 	sprintf(name, "graph.%d", index);
 	int n = std::distance(imap.begin(), imap.end());
 	os << "# " << name << " " << chrm.c_str() << " " << strand << " " << num_combined;
-	os << " " << n << " " << sbounds.size() << " " << tbounds.size() << " " << junctions.size() << " " << paths.size() << endl;
+	os << " " << n << " " << sbounds.size() << " " << tbounds.size() << " " << junctions.size() << " " << phase.size() << " " << paths.size() << endl;
 	if(headers == true) return 0;
 
 	// write current graph
@@ -349,8 +406,8 @@ PI32 combined_graph::get_bounds()
 int combined_graph::print(int index)
 {
 	PI32 p = get_bounds();
-	printf("combined-graph %d: #combined = %d, children = %lu, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-paths = %lu, boundary = [%d, %d)\n", 
-			index, num_combined, children.size(), chrm.c_str(), strand, std::distance(imap.begin(), imap.end()), sbounds.size(), tbounds.size(), junctions.size(), paths.size(), p.first, p.second);
+	printf("combined-graph %d: #combined = %d, children = %lu, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phase = %lu, $paths = %lu, boundary = [%d, %d)\n", 
+			index, num_combined, children.size(), chrm.c_str(), strand, std::distance(imap.begin(), imap.end()), sbounds.size(), tbounds.size(), junctions.size(), phase.size(), paths.size(), p.first, p.second);
 	return 0;
 }
 
