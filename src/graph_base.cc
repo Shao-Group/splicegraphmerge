@@ -91,8 +91,11 @@ PEB graph_base::edge(int s, int t)
 	PEEI p = vv[s]->out_edges();
 	for(edge_iterator it = p.first; it != p.second; it++)
 	{
-		assert((*it)->source() == s);
 		int x = (*it)->target();
+		int y = (*it)->source();
+		assert(x == s || y == s);
+		if(x == s && y != t) continue;
+		if(y == s && x != t) continue;
 		if(x != t) continue;
 		return PEB(*it, true);
 	}
