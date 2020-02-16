@@ -115,9 +115,9 @@ int incubator::merge()
 				double r1 = c * 1.0 / gset[i].splices.size();
 				double r2 = c * 1.0 / gset[j].splices.size();
 
-				printf("r1 = %.3lf, r2 = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, gset[i].splices.size(), gset[j].splices.size());
+				printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r1 < r2 ? r2 : r1, gset[i].splices.size(), gset[j].splices.size());
 
-				if(r1 < 0.3 || r2 < 0.3) continue;
+				if(r1 < 0.4 || r2 < 0.4) continue;
 				if(r1 < 0.7 && r2 < 0.7) continue;
 
 				gr.add_edge(i, j);
