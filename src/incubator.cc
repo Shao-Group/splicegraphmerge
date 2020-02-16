@@ -113,6 +113,7 @@ int incubator::merge()
 				double r1 = c * 1.0 / gset[i].splices.size();
 				double r2 = c * 1.0 / gset[j].splices.size();
 				if(r1 < 0.4 || r2 < 0.4) continue;
+				if(r1 < 0.7 && r2 < 0.7) continue;
 				gr.add_edge(i, j);
 			}
 		}
