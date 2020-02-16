@@ -102,15 +102,15 @@ int incubator::merge()
 		for(int xi = 0; xi < v.size(); xi++)
 		{
 			int i = v[xi];
-			for(int xj = xi + 1; xj < v.size(); xj++)
+			for(int xj = 0; xj < v.size(); xj++)
 			{
 				int j = v[xj];
+				if(i >= j) continue;
+
 				if(gset[i].chrm != gset[j].chrm) continue;
 				if(gset[i].strand != gset[j].strand) continue;
 
-				PEB peb = gr.edge(i, j);
-				if(peb.second == true) continue;
-				//if(gr.edge(i, j).second == true) continue;
+				if(gr.edge(i, j).second == true) continue;
 
 				int c = gset[j].get_overlapped_splice_positions(gset[i].splices);
 				// TODO parameter
