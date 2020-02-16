@@ -108,12 +108,18 @@ int incubator::merge()
 				if(gset[i].chrm != gset[j].chrm) continue;
 				if(gset[i].strand != gset[j].strand) continue;
 
+				if(gr.edge(i, j).second == true) continue;
+
 				int c = gset[j].get_overlapped_splice_positions(gset[i].splices);
 				// TODO parameter
 				double r1 = c * 1.0 / gset[i].splices.size();
 				double r2 = c * 1.0 / gset[j].splices.size();
+
+				printf("r1 = %.3lf, r2 = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, gset[i].splices.size(), gset[j].splices.size());
+
 				if(r1 < 0.3 || r2 < 0.3) continue;
 				if(r1 < 0.7 && r2 < 0.7) continue;
+
 				gr.add_edge(i, j);
 			}
 		}
