@@ -108,6 +108,8 @@ int incubator::merge()
 				if(gset[i].chrm != gset[j].chrm) continue;
 				if(gset[i].strand != gset[j].strand) continue;
 
+				PEB peb = gr.edge(i, j);
+				if(peb.second == true) continue;
 				//if(gr.edge(i, j).second == true) continue;
 
 				int c = gset[j].get_overlapped_splice_positions(gset[i].splices);
