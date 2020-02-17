@@ -119,7 +119,7 @@ int incubator::merge()
 
 				printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r1 < r2 ? r2 : r1, gset[i].splices.size(), gset[j].splices.size());
 
-				if(r1 < 0.3 || r2 < 0.3) continue;
+				if(r1 < 0.2 || r2 < 0.2) continue;
 				//if(r1 < 0.7 && r2 < 0.7) continue;
 
 				gr.add_edge(i, j);
