@@ -7,6 +7,8 @@
 
 typedef map< int32_t, set<int> > MISI;
 typedef pair< int32_t, set<int> > PISI;
+typedef pair<int, int> PI;
+typedef pair<PI, double> PID;
 
 class incubator
 {
@@ -15,7 +17,6 @@ public:
 
 public:
 	vector<combined_graph> gset;			// graph set
-	MISI mis;								// splice map
 	vector<bool> merged;					// whether gset[k] is merged
 	string mdir;							// output dir
 
@@ -26,7 +27,7 @@ public:
 
 	int merge();
 	int merge_component(const set<int> &s);
-	int build_splice_map();
+	int build_splice_map(MISI &mis);
 
 	// write and print
 	int write(const string &file, bool headers = false);
@@ -37,5 +38,6 @@ public:
 };
 
 int load(const string &file, vector<combined_graph> &vc);
+bool compare_graph_overlap(const PID &x, const PID &y);
 
 #endif

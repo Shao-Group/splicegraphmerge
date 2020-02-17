@@ -1,5 +1,6 @@
 #include "incubator.h"
 #include "undirected_graph.h"
+#include "boost/pending/disjoint_sets.hpp"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -64,6 +65,7 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 	gset.insert(gset.end(), vc2.begin(), vc2.end());
 
 	merge();
+
 	int n = 0;
 	for(int k = 0; k < merged.size(); k++)
 	{
@@ -90,11 +92,30 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 
 int incubator::merge()
 {
-	undirected_graph gr;
-	for(int k = 0; k < gset.size(); k++) gr.add_vertex();
+	// maintain num_combined
+	vector<int> csize(gset.size(), 0);
+	for(int i = 0; i < gset.size(); i++)
+	{
+		csize[i] = gset[i].num_combined;
+	}
 
-	build_splice_map();
+	// disjoint map, maintain clusters
+	vector<int> rank(gset.size(), -1);
+	vector<int> parent(gset.size(), -1);
 
+	disjoint_sets<int*, int*> ds(&rank[0], &parent[0]);
+	for(int k = 0; k < gset.size(); k++)
+	{
+		ds.make_set(k);
+	}
+
+	// maintain the similarity between any two graphs
+	vector< map<int, double> > gmap(gset.size());
+
+	vector<PID> vpid;
+
+	MISI mis;
+	build_splice_map(mis);
 	for(MISI::iterator mi = mis.begin(); mi != mis.end(); mi++)
 	{
 		set<int> &ss = mi->second;
@@ -110,31 +131,61 @@ int incubator::merge()
 				if(gset[i].chrm != gset[j].chrm) continue;
 				if(gset[i].strand != gset[j].strand) continue;
 
-				if(gr.edge(i, j).second == true) continue;
+				if(gmap[i].find(j) != gmap[i].end()) continue;
 
 				int c = gset[j].get_overlapped_splice_positions(gset[i].splices);
-				// TODO parameter
+
 				double r1 = c * 1.0 / gset[i].splices.size();
 				double r2 = c * 1.0 / gset[j].splices.size();
+				double r = r1 < r2 ? r1 : r2;
 
-				printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r1 < r2 ? r2 : r1, gset[i].splices.size(), gset[j].splices.size());
+				// TODO parameter
+				if(r1 < 0.1 || r2 < 0.1) continue;
+				printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r, gset[i].splices.size(), gset[j].splices.size());
 
-				if(r1 < 0.2 || r2 < 0.2) continue;
-				//if(r1 < 0.7 && r2 < 0.7) continue;
-
-				gr.add_edge(i, j);
+				gmap[i].insert(pair<int, double>(j, r));
+				vpid.push_back(PID(PI(i, j), r));
 			}
 		}
 	}
 
-	vector< set<int> > vs = gr.compute_connected_components();
+	sort(vpid.begin(), vpid.end(), compare_graph_overlap);
+
+	// TODO parameter
+	int max_combine_size = 10;
+	for(int i = 0; i < vpid.size(); i++)
+	{
+		int x = vpid[i].first.first;
+		int y = vpid[i].first.second;
+		double r = vpid[i].second;
+		assert(x < y);
+
+		int px = ds.find_set(x);
+		int py = ds.find_set(y);
+
+		if(px == py) continue;
+		int sum = csize[px] + csize[py]; 
+		if(sum > max_combine_size) continue;
+
+		printf("combine %d and %d with score = %.3lf: %d + %d -> %d\n", x, y, r, csize[px], csize[py], sum);
+
+		ds.link(px, py);
+		int q = ds.find_set(px);
+		assert(q == ds.find_set(py));
+
+		csize[q] = sum;
+	}
 
 	merged.resize(gset.size());
 	merged.assign(gset.size(), false);
 
-	for(int k = 0; k < vs.size(); k++)
+	for(int i = 0; i < gset.size(); i++)
 	{
-		merge_component(vs[k]);
+		int p = ds.find_set(i);
+		if(p == i) continue;
+
+		gset[p].combine(gset[i]);
+		merged[i] = true;
 	}
 	return 0;
 }
@@ -171,7 +222,7 @@ int incubator::write(const string &file, bool headers)
 	return 0;
 }
 
-int incubator::build_splice_map()
+int incubator::build_splice_map(MISI &mis)
 {
 	mis.clear();
 	for(int k = 0; k < gset.size(); k++)
@@ -240,4 +291,9 @@ int load(const string &file, vector<combined_graph> &vc)
 	}
 	fin.close();
 	return 0;
+}
+
+bool compare_graph_overlap(const PID &x, const PID &y)
+{
+	return x.second > y.second;
 }
