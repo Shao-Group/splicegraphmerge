@@ -141,7 +141,7 @@ int incubator::merge()
 
 				// TODO parameter
 				if(r1 < 0.1 || r2 < 0.1) continue;
-				printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r, gset[i].splices.size(), gset[j].splices.size());
+				//printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r, gset[i].splices.size(), gset[j].splices.size());
 
 				gmap[i].insert(pair<int, double>(j, r));
 				vpid.push_back(PID(PI(i, j), r));
@@ -167,7 +167,8 @@ int incubator::merge()
 		int sum = csize[px] + csize[py]; 
 		if(sum > max_combine_size) continue;
 
-		printf("combine %d and %d with score = %.3lf: %d + %d -> %d\n", x, y, r, csize[px], csize[py], sum);
+		printf("combine graph %d (#splices = %lu) and %d (#splices = %lu) with score = %.3lf: %d + %d -> %d\n", 
+				x, gset[x].splices.size(), y, gset[y].splices.size(), r, csize[px], csize[py], sum);
 
 		ds.link(px, py);
 		int q = ds.find_set(px);
