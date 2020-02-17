@@ -32,12 +32,9 @@ int incubator::binary_merge(const string &file)
 	}
 
 	vector<combined_graph> vc;
-	vector<combined_graph> fd;
 	binary_merge(files, 0, files.size(), vc);
 
-	grset = vc;
-	merged.assign(grset.size(), false);
-
+	fixed.insert(fixed.end(), vc.begin(), vc.end());
 	return 0;
 }
 
@@ -63,17 +60,13 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 	binary_merge(files, low, mid, vc1);
 	binary_merge(files, mid, high, vc2);
 
-	grset = vc1;
-	grset.insert(grset.end(), vc2.begin(), vc2.end());
+	int n1 = vc1.size();
+	int n2 = vc2.size();
 
-	merge();
+	vc1.insert(vc1.end(), vc2.begin(), vc2.end());
+	merge(vc1, vc);
 
-	int n = 0;
-	for(int k = 0; k < merged.size(); k++)
-	{
-		if(merged[k] == false) n++;
-	}
-	printf("merge final with %d <- %lu + %lu (fixed = %lu) combined-graphs for files [%d, %d]\n", n, vc1.size(), vc2.size(), fixed.size(), low, high - 1);
+	printf("merge final with %lu <- %d + %d (fixed = %lu) combined-graphs for files [%d, %d]\n", vc.size(), n1, n2, fixed.size(), low, high - 1);
 
 	if(mdir != "" && high - low >= 10)
 	{
@@ -82,17 +75,10 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 		write(file, true);
 	}
 
-	assert(merged.size() == grset.size());
-
-	for(int k = 0; k < grset.size(); k++)
-	{
-		if(merged[k] == true) continue;
-		vc.push_back(grset[k]);
-	}
 	return 0;
 }
 
-int incubator::merge()
+int incubator::merge(const vector<combined_graph> &grset, vector<combined_graph> &vc)
 {
 	// maintain num_combined
 	vector<int> csize(grset.size(), 0);
@@ -117,7 +103,7 @@ int incubator::merge()
 	vector<PID> vpid;
 
 	MISI mis;
-	build_splice_map(mis);
+	build_splice_map(grset, mis);
 	for(MISI::iterator mi = mis.begin(); mi != mis.end(); mi++)
 	{
 		set<int> &ss = mi->second;
@@ -154,8 +140,6 @@ int incubator::merge()
 		}
 	}
 
-	merged.resize(grset.size());
-	merged.assign(grset.size(), false);
 	sort(vpid.begin(), vpid.end(), compare_graph_overlap);
 
 	for(int i = 0; i < vpid.size(); i++)
@@ -180,57 +164,37 @@ int incubator::merge()
 		ds.link(px, py);
 		int q = ds.find_set(px);
 		assert(q == ds.find_set(py));
-
-		if(q == x) 
-		{
-			grset[x].combine(grset[y]);
-			merged[y] = true;
-		}
-		else if(q == y) 
-		{
-			grset[y].combine(grset[x]);
-			merged[x] = true;
-		}
-		else assert(false);
-
+		assert(q == px || q == py);
 		csize[q] = sum;
-		assert(sum == grset[q].num_combined);
 	}
 
-	vector<combined_graph> cc;
-	vector<bool> bb;
+	vector<combined_graph> cc(grset.size());
+	vector<int> pp(grset.size(), -1);
 	for(int i = 0; i < grset.size(); i++)
 	{
-		if(grset[i].num_combined >= max_combined_num)
-		{
-			fixed.push_back(grset[i]);
-		}
-		else
-		{
-			cc.push_back(grset[i]);
-			bb.push_back(merged[i]);
-		}
+		int p = ds.find_set(i);
+		pp[i] = p;
+		if(p == i) cc[i] = grset[i];
 	}
 
-	grset = cc;
-	merged = bb;
-	return 0;
-}
-
-int incubator::merge_component(const set<int> &s)
-{
-	if(s.size() <= 1) return 0;
-	int x = *(s.begin());
-
-	for(set<int>::iterator it = s.begin(); it != s.end(); it++)
+	for(int i = 0; i < grset.size(); i++)
 	{
-		int k = *it;
-		if(k == x) continue;
+		if(pp[i] == i) continue;
+		int p = pp[i];
+		cc[p].combine(grset[i]);
+	}
 
-		//printf("final combine %d and %d with %lu and %lu vertices\n", x, k, grset[x].imap.size(), grset[k].imap.size());
-
-		grset[x].combine(grset[k]);
-		merged[k] = true;
+	for(int i = 0; i < grset.size(); i++)
+	{
+		if(cc[i].num_combined >= max_combined_num)
+		{
+			assert(pp[i] == i);
+			fixed.push_back(cc[i]);
+		}
+		else if(i == pp[i])
+		{
+			vc.push_back(grset[i]);
+		}
 	}
 	return 0;
 }
@@ -239,12 +203,6 @@ int incubator::write(const string &file, bool headers)
 {
 	ofstream fout(file.c_str());
 	if(fout.fail()) exit(1);
-
-	for(int k = 0; k < grset.size(); k++)
-	{
-		if(merged[k] == true) continue;
-		grset[k].write(fout, k, headers);
-	}
 
 	for(int k = 0; k < fixed.size(); k++)
 	{
@@ -255,7 +213,7 @@ int incubator::write(const string &file, bool headers)
 	return 0;
 }
 
-int incubator::build_splice_map(MISI &mis)
+int incubator::build_splice_map(const vector<combined_graph> &grset, MISI &mis)
 {
 	mis.clear();
 	for(int k = 0; k < grset.size(); k++)
@@ -281,7 +239,7 @@ int incubator::build_splice_map(MISI &mis)
 
 int incubator::print()
 {
-	for(int k = 0; k < grset.size(); k++) grset[k].print(k);
+	for(int k = 0; k < fixed.size(); k++) fixed[k].print(k);
 	return 0;
 }
 

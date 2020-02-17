@@ -9,6 +9,7 @@ typedef pair<double, int> DI;
 class combined_graph
 {
 public:
+	combined_graph();
 	combined_graph(const string &line);
 
 public:
@@ -37,7 +38,7 @@ public:
 	int combine_splice_positions(const combined_graph &gt);
 
 	PI32 get_bounds();
-	int get_overlapped_splice_positions(const vector<int32_t> &v);
+	int get_overlapped_splice_positions(const vector<int32_t> &v) const;
 
 	int build(istream &is, const string &chrm, char c);
 	int write(ostream &os, int index, bool headers = false);

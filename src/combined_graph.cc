@@ -1,6 +1,11 @@
 #include "combined_graph.h"
 #include "draw.h"
 
+combined_graph::combined_graph()
+{
+	num_combined = 0;
+}
+
 combined_graph::combined_graph(const string &line)
 {
 	hline = line;
@@ -157,7 +162,7 @@ int combined_graph::combine_splice_positions(const combined_graph &gt)
 	return 0;
 }
 
-int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v)
+int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v) const
 {
 	vector<int32_t> vv(v.size(), 0);
 	vector<int32_t>::iterator it = set_intersection(v.begin(), v.end(), splices.begin(), splices.end(), vv.begin());

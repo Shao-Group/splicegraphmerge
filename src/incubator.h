@@ -16,20 +16,16 @@ public:
 	incubator(const string &dir);
 
 public:
-	vector<combined_graph> grset;			// graph set
 	vector<combined_graph> fixed;			// fixed set of graphs
-	vector<bool> merged;					// whether gset[k] is merged
-	string mdir;							// output dir
 	int max_combined_num;					// parameter
+	string mdir;							// output dir
 
 public:
 	// binary search
 	int binary_merge(const string &file);
 	int binary_merge(const vector<string> &files, int low, int high, vector<combined_graph> &vc);
-
-	int merge();
-	int merge_component(const set<int> &s);
-	int build_splice_map(MISI &mis);
+	int merge(const vector<combined_graph> &grset, vector<combined_graph> &vc);
+	int build_splice_map(const vector<combined_graph> &grset, MISI &mis);
 
 	// write and print
 	int write(const string &file, bool headers = false);
