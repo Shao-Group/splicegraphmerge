@@ -193,7 +193,7 @@ int incubator::merge(const vector<combined_graph> &grset, vector<combined_graph>
 		}
 		else if(i == pp[i])
 		{
-			vc.push_back(grset[i]);
+			vc.push_back(cc[i]);
 		}
 	}
 	return 0;
