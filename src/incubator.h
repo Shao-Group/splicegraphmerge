@@ -16,9 +16,11 @@ public:
 	incubator(const string &dir);
 
 public:
-	vector<combined_graph> gset;			// graph set
+	vector<combined_graph> grset;			// graph set
+	vector<combined_graph> fixed;			// fixed set of graphs
 	vector<bool> merged;					// whether gset[k] is merged
 	string mdir;							// output dir
+	int max_combined_num;					// parameter
 
 public:
 	// binary search
