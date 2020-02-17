@@ -9,7 +9,7 @@
 incubator::incubator(const string &dir)
 {
 	mdir = dir;
-	max_combined_num = 5;
+	max_combined_num = 6;
 }
 
 int incubator::binary_merge(const string &file)
@@ -131,7 +131,8 @@ int incubator::merge(const vector<combined_graph> &grset, vector<combined_graph>
 				double r = r1 < r2 ? r1 : r2;
 
 				// TODO parameter
-				if(r1 < 0.1 || r2 < 0.1) continue;
+				if(c <= 1) continue;
+				if(r1 < 0.2 || r2 < 0.2) continue;
 				//printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r, grset[i].splices.size(), grset[j].splices.size());
 
 				gmap[i].insert(pair<int, double>(j, r));
