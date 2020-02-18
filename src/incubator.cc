@@ -6,10 +6,10 @@
 #include <iostream>
 #include <algorithm>
 
-incubator::incubator(const string &dir)
+incubator::incubator(int m, const string &dir)
 {
 	mdir = dir;
-	max_combined_num = 5;
+	max_combined_num = m;
 }
 
 int incubator::binary_merge(const string &file)

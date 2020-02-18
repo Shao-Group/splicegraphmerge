@@ -18,22 +18,22 @@ int main(int argc, const char **argv)
 	if(argc == 1)
 	{
 		cout<<"usage: " <<endl;
-		cout<<"       " <<argv[0] << " combine <graph.list> <combined.gr> [<intermediate-dir>]"<<endl;
+		cout<<"       " <<argv[0] << " combine <graph.list> <combined.gr> <max-combine-num> [<intermediate-dir>]"<<endl;
 		cout<<"       " <<argv[0] << " analyze <combined.gr>"<<endl;
 		return 0;
 	}
 
 	if(string(argv[1]) == "combine")
 	{
-		if(argc == 4)
+		if(argc == 5)
 		{
-			incubator icb("");
+			incubator icb(atoi(argv[4]), "");
 			icb.binary_merge(argv[2]);
 			icb.write(argv[3]);
 		}
 		else if(argc == 5)
 		{
-			incubator icb(argv[4]);
+			incubator icb(atoi(argv[4]), argv[5]);
 			icb.binary_merge(argv[2]);
 			icb.write(argv[3]);
 		}
@@ -41,7 +41,7 @@ int main(int argc, const char **argv)
 
 	if(string(argv[1]) == "analyze")
 	{
-		incubator icb("");
+		incubator icb(0, "");
 		icb.analyze(argv[2]);
 	}
 	return 0;

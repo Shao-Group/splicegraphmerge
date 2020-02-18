@@ -13,7 +13,7 @@ typedef pair<PI, double> PID;
 class incubator
 {
 public:
-	incubator(const string &dir);
+	incubator(int m, const string &dir);
 
 public:
 	vector<combined_graph> fixed;			// fixed set of graphs
