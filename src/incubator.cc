@@ -126,16 +126,20 @@ int incubator::merge(const vector<combined_graph> &grset, vector<combined_graph>
 				if(gmap[i].find(j) != gmap[i].end()) continue;
 
 				int c = grset[j].get_overlapped_splice_positions(grset[i].splices);
-				if(c <= 1) continue;
+				if(c <= 1.5) continue;
 
+				/*
 				double r1 = c * 1.0 / grset[i].splices.size();
 				double r2 = c * 1.0 / grset[j].splices.size();
 				double rx = r1 < r2 ? r1 : r2;
 				double ry = r1 > r2 ? r1 : r2;
 				double r = 2 * rx + 0.5 * ry;
+				*/
 
 				// TODO parameter
-				if(last == false && r < 2.0) continue;
+				double r = 2.0 * c / (grset[i].splices.size() + grset[j].splices.size());
+				if(last == false && r < 0.8) continue;
+
 				//printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r, grset[i].splices.size(), grset[j].splices.size());
 
 				gmap[i].insert(pair<int, double>(j, r));
