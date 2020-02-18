@@ -23,8 +23,8 @@ public:
 public:
 	// binary search
 	int binary_merge(const string &file);
-	int binary_merge(const vector<string> &files, int low, int high, vector<combined_graph> &vc);
-	int merge(const vector<combined_graph> &grset, vector<combined_graph> &vc);
+	int binary_merge(const vector<string> &files, int low, int high, vector<combined_graph> &vc, bool last);
+	int merge(const vector<combined_graph> &grset, vector<combined_graph> &vc, bool last);
 	int build_splice_map(const vector<combined_graph> &grset, MISI &mis);
 
 	// write and print

@@ -9,7 +9,7 @@
 incubator::incubator(const string &dir)
 {
 	mdir = dir;
-	max_combined_num = 6;
+	max_combined_num = 5;
 }
 
 int incubator::binary_merge(const string &file)
@@ -32,13 +32,13 @@ int incubator::binary_merge(const string &file)
 	}
 
 	vector<combined_graph> vc;
-	binary_merge(files, 0, files.size(), vc);
+	binary_merge(files, 0, files.size(), vc, true);
 
 	fixed.insert(fixed.end(), vc.begin(), vc.end());
 	return 0;
 }
 
-int incubator::binary_merge(const vector<string> &files, int low, int high, vector<combined_graph> &vc)
+int incubator::binary_merge(const vector<string> &files, int low, int high, vector<combined_graph> &vc, bool last)
 {
 	//printf("binary merge from %d to %d (total = %lu)\n", low, high, files.size());
 	vc.clear();
@@ -57,14 +57,15 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 
 	vector<combined_graph> vc1;
 	vector<combined_graph> vc2;
-	binary_merge(files, low, mid, vc1);
-	binary_merge(files, mid, high, vc2);
+	binary_merge(files, low, mid, vc1, false);
+	binary_merge(files, mid, high, vc2, false);
 
 	int n1 = vc1.size();
 	int n2 = vc2.size();
 
 	vc1.insert(vc1.end(), vc2.begin(), vc2.end());
-	merge(vc1, vc);
+
+	merge(vc1, vc, last);
 
 	printf("merge final with %lu <- %d + %d (fixed = %lu) combined-graphs for files [%d, %d]\n", vc.size(), n1, n2, fixed.size(), low, high - 1);
 
@@ -78,7 +79,7 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 	return 0;
 }
 
-int incubator::merge(const vector<combined_graph> &grset, vector<combined_graph> &vc)
+int incubator::merge(const vector<combined_graph> &grset, vector<combined_graph> &vc, bool last)
 {
 	// maintain num_combined
 	vector<int> csize(grset.size(), 0);
@@ -125,14 +126,16 @@ int incubator::merge(const vector<combined_graph> &grset, vector<combined_graph>
 				if(gmap[i].find(j) != gmap[i].end()) continue;
 
 				int c = grset[j].get_overlapped_splice_positions(grset[i].splices);
+				if(c <= 1) continue;
 
 				double r1 = c * 1.0 / grset[i].splices.size();
 				double r2 = c * 1.0 / grset[j].splices.size();
-				double r = r1 < r2 ? r1 : r2;
+				double rx = r1 < r2 ? r1 : r2;
+				double ry = r1 > r2 ? r1 : r2;
+				double r = 2 * rx + 0.5 * ry;
 
 				// TODO parameter
-				if(c <= 1) continue;
-				if(r1 < 0.2 || r2 < 0.2) continue;
+				if(last == true && r < 2.0) continue;
 				//printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r, grset[i].splices.size(), grset[j].splices.size());
 
 				gmap[i].insert(pair<int, double>(j, r));
