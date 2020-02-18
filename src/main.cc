@@ -31,7 +31,7 @@ int main(int argc, const char **argv)
 			icb.binary_merge(argv[2]);
 			icb.write(argv[3]);
 		}
-		else if(argc == 5)
+		else if(argc == 6)
 		{
 			incubator icb(atoi(argv[4]), argv[5]);
 			icb.binary_merge(argv[2]);
