@@ -135,7 +135,7 @@ int incubator::merge(const vector<combined_graph> &grset, vector<combined_graph>
 				double r = 2 * rx + 0.5 * ry;
 
 				// TODO parameter
-				if(last == true && r < 2.0) continue;
+				if(last == false && r < 2.0) continue;
 				//printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r, grset[i].splices.size(), grset[j].splices.size());
 
 				gmap[i].insert(pair<int, double>(j, r));
