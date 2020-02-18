@@ -274,7 +274,7 @@ int combined_graph::build(istream &is, const string &ch, char st)
 				it->second.second += c;
 			}
 		}
-		else if(string(name) == "path")
+		else if(string(name) == "path" && false)	// TODO
 		{
 			int z;
 			sstr >> z;
