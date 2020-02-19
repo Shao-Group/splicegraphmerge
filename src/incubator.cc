@@ -5,11 +5,51 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <thread>
 
-incubator::incubator(int m, const string &dir)
+incubator::incubator(int m, int t, const string &dir)
 {
 	mdir = dir;
+	max_threads = t;
 	max_combined_num = m;
+}
+
+int incubator::load(const string &file)
+{
+	ifstream fin(file.c_str());
+	if(fin.fail())
+	{
+		printf("cannot open file %s\n", file.c_str());
+		exit(0);
+	}
+
+	vector< vector<string> > files(max_threads);
+
+	char line[102400];
+	int index = 0;
+	while(fin.getline(line, 10240, '\n'))
+	{
+		string s(line);
+		if(s.size() == 0) continue;
+		int k = index % max_threads;
+		files[k].push_back(s);
+		index++;
+	}
+
+	vector< vector<combined_graph> > vv(max_threads);
+
+	vector<thread> threads;
+	for(int k = 0; k < files.size(); k++)
+	{
+		printf("thread %d processes %lu files\n", k, files[k].size());
+		threads.emplace_back(load_multiple, files[k], std::ref(vv[k]));
+	}
+	for(int k = 0; k < threads.size(); k++)
+	{
+		threads[k].join();
+	}
+
+	return 0;
 }
 
 int incubator::binary_merge(const string &file)
@@ -48,7 +88,7 @@ int incubator::binary_merge(const vector<string> &files, int low, int high, vect
 	if(low + 1 == high)
 	{
 		string file = files[low];
-		load(file, vc);
+		load_single(file, vc);
 		printf("create %lu combined-graphs for file %d (%s)\n", vc.size(), low, files[low].c_str());
 		return 0;
 	}
@@ -254,7 +294,7 @@ int incubator::print()
 int incubator::analyze(const string &file)
 {
 	vector<combined_graph> vc;
-	load(file, vc);
+	load_single(file, vc);
 	for(int k = 0; k < vc.size(); k++)
 	{
 		vc[k].analyze(k);
@@ -262,7 +302,17 @@ int incubator::analyze(const string &file)
 	return 0;
 }
 
-int load(const string &file, vector<combined_graph> &vc)
+int load_multiple(const vector<string> &files, vector<combined_graph> &vc)
+{
+	for(int k = 0; k < files.size(); k++) 
+	{
+		//printf("load file %s\n", files[k].c_str());
+		load_single(files[k], vc);
+	}
+	return 0;
+}
+
+int load_single(const string &file, vector<combined_graph> &vc)
 {
 	ifstream fin(file.c_str());
 	if(fin.fail())
@@ -288,6 +338,9 @@ int load(const string &file, vector<combined_graph> &vc)
 		gr.build(fin, chrm, strand[0]);
 		vc.push_back(gr);
 	}
+
+	printf("loaded graphs in file %s\n", file.c_str());
+
 	fin.close();
 	return 0;
 }
