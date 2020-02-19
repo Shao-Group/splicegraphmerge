@@ -12,6 +12,7 @@ incubator::incubator(int m, int t, const string &dir)
 	mdir = dir;
 	max_threads = t;
 	max_combined_num = m;
+	g2g.resize(3);
 }
 
 int incubator::load(const string &file)
@@ -36,19 +37,19 @@ int incubator::load(const string &file)
 		index++;
 	}
 
-	vector< vector<combined_graph> > vv(max_threads);
-
+	mutex mylock;								// lock for trsts
 	vector<thread> threads;
 	for(int k = 0; k < files.size(); k++)
 	{
 		printf("thread %d processes %lu files\n", k, files[k].size());
-		threads.emplace_back(load_multiple, files[k], std::ref(vv[k]));
+		threads.emplace_back(load_multiple, files[k], std::ref(groups), std::ref(mylock), std::ref(g2g));
 	}
 	for(int k = 0; k < threads.size(); k++)
 	{
 		threads[k].join();
 	}
 
+	print_groups();
 	return 0;
 }
 
@@ -291,6 +292,15 @@ int incubator::print()
 	return 0;
 }
 
+int incubator::print_groups()
+{
+	for(int k = 0; k < groups.size(); k++)
+	{
+		printf("group %d (chrm = %s, strand = %c) contains %lu graphs\n", k, gv[k].chrm.c_str(), gv[k].strand, gv[k].gset.size());
+	}
+	return 0;
+}
+
 int incubator::analyze(const string &file)
 {
 	vector<combined_graph> vc;
@@ -302,13 +312,36 @@ int incubator::analyze(const string &file)
 	return 0;
 }
 
-int load_multiple(const vector<string> &files, vector<combined_graph> &vc)
-{
+int load_multiple(const vector<string> &files, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &m)
+{	
+	vector<combined_graph> v;
 	for(int k = 0; k < files.size(); k++) 
 	{
 		//printf("load file %s\n", files[k].c_str());
-		load_single(files[k], vc);
+		load_single(files[k], v);
 	}
+
+	mylock.lock();
+	for(int k = 0; k < v.size(); k++)
+	{
+		string chrm = v[k].chrm;
+		char c = v[k].strand;
+		int s = 0;
+		if(c == '+') s = 1;
+		if(c == '-') s = 2;
+		if(m[s].find(chrm) == m[s].end())
+		{
+			combined_group gp(chrm, c);
+			gp.add_graph(v[k]);
+			m[s].insert(pair<string, int>(chrm, gv.size()));
+			gv.push_back(gp);
+		}
+		else
+		{
+			gv[m[s][chrm]].add_graph(v[k]);
+		}
+	}
+	mylock.unlock();
 	return 0;
 }
 

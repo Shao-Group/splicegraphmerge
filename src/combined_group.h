@@ -6,12 +6,15 @@
 class combined_group
 {
 public:
-	combined_group();
+	combined_group(string c, char s);
 
 public:
 	vector<combined_graph> gset;
 	string chrm;
 	char strand;
+
+public:
+	int add_graph(const combined_graph &gr);
 };
 
 #endif
