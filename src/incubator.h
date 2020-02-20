@@ -29,7 +29,7 @@ public:
 public:
 	// multiple-thread load
 	int load(const string &file);
-	int distribute();
+	int merge();
 
 	// binary search
 	int binary_merge(const string &file);

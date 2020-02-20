@@ -26,11 +26,12 @@ private:
 
 public:
 	int add_graph(const combined_graph &gr);
+	int resolve();
 
 private:
 	int build_splice_map();
 	int build_similarity();
-	int merge();
+	int combine_graphs();
 };
 
 bool compare_graph_similarity(const PID &x, const PID &y);

@@ -15,6 +15,14 @@ int combined_group::add_graph(const combined_graph &gr)
 	return 0;
 }
 
+int combined_group::resolve()
+{
+	build_splice_map();
+	build_similarity();
+	combine_graphs();
+	return 0;
+}
+
 int combined_group::build_splice_map()
 {
 	mis.clear();
@@ -89,8 +97,7 @@ int combined_group::build_similarity()
 	return 0;
 }
 
-
-int combined_group::merge()
+int combined_group::combine_graphs()
 {
 	// maintain num_combined
 	vector<int> csize(gset.size(), 0);

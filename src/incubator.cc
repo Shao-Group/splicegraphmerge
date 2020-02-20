@@ -53,6 +53,11 @@ int incubator::load(const string &file)
 	return 0;
 }
 
+int incubator::merge()
+{
+	return 0;	
+}
+
 int incubator::binary_merge(const string &file)
 {
 	ifstream fin(file.c_str());
