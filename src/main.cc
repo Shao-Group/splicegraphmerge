@@ -28,6 +28,7 @@ int main(int argc, const char **argv)
 		if(argc != 7) return 0;
 		incubator icb(atoi(argv[4]), atoi(argv[5]), argv[6]);
 		icb.load(argv[2]);
+		icb.merge();
 		//icb.binary_merge(argv[2]);
 		//icb.write(argv[3]);
 	}
