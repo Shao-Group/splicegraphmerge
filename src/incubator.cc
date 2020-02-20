@@ -296,7 +296,7 @@ int incubator::print_groups()
 {
 	for(int k = 0; k < groups.size(); k++)
 	{
-		printf("group %d (chrm = %s, strand = %c) contains %lu graphs\n", k, gv[k].chrm.c_str(), gv[k].strand, gv[k].gset.size());
+		printf("group %d (chrm = %s, strand = %c) contains %lu graphs\n", k, groups[k].chrm.c_str(), groups[k].strand, groups[k].gset.size());
 	}
 	return 0;
 }
