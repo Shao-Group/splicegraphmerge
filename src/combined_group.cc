@@ -20,6 +20,24 @@ int combined_group::resolve()
 	build_splice_map();
 	build_similarity();
 	combine_graphs();
+	stats();
+	return 0;
+}
+
+int combined_group::stats()
+{
+	map<int, int> m;
+	for(int k = 0; k < mset.size(); k++)
+	{
+		int n = mset[k].num_combined;
+		if(m.find(n) == m.end()) m.insert(pair<int, int>(n, 1));
+		else m[n]++;
+	}
+
+	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
+	{
+		printf("total %d graphs with combined %d graphs\n", it->second, it->first);
+	}
 	return 0;
 }
 

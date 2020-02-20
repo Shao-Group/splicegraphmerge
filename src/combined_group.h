@@ -27,6 +27,7 @@ private:
 public:
 	int add_graph(const combined_graph &gr);
 	int resolve();
+	int stats();
 
 private:
 	int build_splice_map();
