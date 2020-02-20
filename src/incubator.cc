@@ -6,6 +6,8 @@
 #include <iostream>
 #include <algorithm>
 #include <thread>
+#include <boost/asio/thread_pool.hpp>
+#include <boost/asio/post.hpp>
 
 incubator::incubator(int m, int t, const string &dir)
 {
@@ -55,6 +57,16 @@ int incubator::load(const string &file)
 
 int incubator::merge()
 {
+	boost::asio::thread_pool pool(max_threads); // thread pool
+
+	for(int k = 0; k < groups.size(); k++)
+	{
+		combined_group &gp = groups[k];
+		boost::asio::post(pool, [&gp]{ gp.resolve(); });
+	}
+
+	pool.join();
+
 	return 0;	
 }
 
