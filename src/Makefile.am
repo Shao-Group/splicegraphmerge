@@ -1,6 +1,6 @@
 bin_PROGRAMS = splicegraphmerge
 
-#splicegraphmerge_CPPFLAGS = -pg
+splicegraphmerge_CPPFLAGS = -std=c++11
 splicegraphmerge_LDFLAGS = -pthread
 
 splicegraphmerge_SOURCES = splice_graph.h splice_graph.cc \

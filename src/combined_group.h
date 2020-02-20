@@ -3,18 +3,36 @@
 
 #include "combined_graph.h"
 
+typedef map< int32_t, set<int> > MISI;
+typedef pair< int32_t, set<int> > PISI;
+typedef pair<int, int> PI;
+typedef pair<PI, double> PID;
+typedef map<int, double> MID;
+
 class combined_group
 {
 public:
 	combined_group(string c, char s);
 
 public:
-	vector<combined_graph> gset;
+	vector<combined_graph> gset;		// given graphs
+	vector<combined_graph> mset;		// merged graphs
 	string chrm;
 	char strand;
 
+private:
+	MISI mis;
+	vector<PID> vpid;
+
 public:
 	int add_graph(const combined_graph &gr);
+
+private:
+	int build_splice_map();
+	int build_similarity();
+	int merge();
 };
+
+bool compare_graph_similarity(const PID &x, const PID &y);
 
 #endif
