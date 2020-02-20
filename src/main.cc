@@ -29,8 +29,8 @@ int main(int argc, const char **argv)
 		incubator icb(atoi(argv[4]), atoi(argv[5]));
 		icb.load(argv[2]);
 		icb.merge(atoi(argv[6]));
+		icb.write(argv[3]);
 		//icb.binary_merge(argv[2]);
-		//icb.write(argv[3]);
 	}
 
 	if(string(argv[1]) == "analyze")

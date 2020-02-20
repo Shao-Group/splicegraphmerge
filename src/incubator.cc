@@ -270,9 +270,13 @@ int incubator::write(const string &file, bool headers)
 	ofstream fout(file.c_str());
 	if(fout.fail()) exit(1);
 
-	for(int k = 0; k < fixed.size(); k++)
+	int index = 0;
+	for(int k = 0; k < groups.size(); k++)
 	{
-		fixed[k].write(fout, k, headers);
+		for(int j = 0; j < groups[k].mset.size(); j++)
+		{
+			groups[k].mset[j].write(fout, index++, headers);
+		}
 	}
 
 	fout.close();
