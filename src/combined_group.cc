@@ -15,11 +15,11 @@ int combined_group::add_graph(const combined_graph &gr)
 	return 0;
 }
 
-int combined_group::resolve()
+int combined_group::resolve(int max_combined, double ratio)
 {
 	build_splice_map();
-	build_similarity();
-	combine_graphs();
+	build_similarity(ratio);
+	combine_graphs(max_combined);
 	stats();
 	return 0;
 }
@@ -65,7 +65,7 @@ int combined_group::build_splice_map()
 	return 0;
 }
 
-int combined_group::build_similarity()
+int combined_group::build_similarity(double ratio)
 {
 	// maintain the similarity between any two graphs
 	vector< set<int> > gmap(gset.size());		// success; into vpid
@@ -90,12 +90,12 @@ int combined_group::build_similarity()
 				if(fmap[i].find(j) != fmap[i].end()) continue;
 
 				int c = gset[j].get_overlapped_splice_positions(gset[i].splices);
-				double r = 2.0 * c / (gset[i].splices.size() + gset[j].splices.size());
+				double r = c * 1.0 / (gset[i].splices.size() + gset[j].splices.size() - c);
 
 				// TODO parameters
 				bool b = true;
-				if(c <= 1.5) b = false;
-				if(r <= 0.8) b = false;
+				if(c <= 1.50) b = false;
+				if(r < ratio) b = false;
 
 				//printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r, gset[i].splices.size(), gset[j].splices.size());
 
@@ -115,7 +115,7 @@ int combined_group::build_similarity()
 	return 0;
 }
 
-int combined_group::combine_graphs()
+int combined_group::combine_graphs(int max_combined)
 {
 	// maintain num_combined
 	vector<int> csize(gset.size(), 0);
@@ -147,6 +147,8 @@ int combined_group::combine_graphs()
 		int py = ds.find_set(y);
 
 		if(px == py) continue;
+		if(csize[px] >= max_combined) continue;
+		if(csize[py] >= max_combined) continue;
 
 		int sum = csize[px] + csize[py]; 
 

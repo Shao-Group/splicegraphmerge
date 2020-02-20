@@ -15,21 +15,21 @@ typedef pair<PI, double> PID;
 class incubator
 {
 public:
-	incubator(int m, int t, const string &dir);
+	incubator(int m, int t);
 
 public:
 	vector<combined_group> groups;			// graph groups
 	vector< map<string, int> > g2g;
 
 	vector<combined_graph> fixed;			// fixed set of graphs
-	int max_combined_num;					// parameter
+	int max_combined;					// parameter
 	string mdir;							// output dir
 	int max_threads;
 
 public:
 	// multiple-thread load
 	int load(const string &file);
-	int merge();
+	int merge(double merge_ratio);
 
 	// binary search
 	int binary_merge(const string &file);

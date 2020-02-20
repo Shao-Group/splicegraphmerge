@@ -9,11 +9,10 @@
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/post.hpp>
 
-incubator::incubator(int m, int t, const string &dir)
+incubator::incubator(int m, int t)
 {
-	mdir = dir;
 	max_threads = t;
-	max_combined_num = m;
+	max_combined = m;
 	g2g.resize(3);
 }
 
@@ -55,14 +54,14 @@ int incubator::load(const string &file)
 	return 0;
 }
 
-int incubator::merge()
+int incubator::merge(double ratio)
 {
 	boost::asio::thread_pool pool(max_threads); // thread pool
 
 	for(int k = 0; k < groups.size(); k++)
 	{
 		combined_group &gp = groups[k];
-		boost::asio::post(pool, [&gp]{ gp.resolve(); });
+		boost::asio::post(pool, [&gp, this, ratio]{ gp.resolve(this->max_combined, ratio); });
 	}
 
 	pool.join();
@@ -171,13 +170,13 @@ int incubator::merge(const vector<combined_graph> &grset, vector<combined_graph>
 		for(int xi = 0; xi < v.size(); xi++)
 		{
 			int i = v[xi];
-			assert(grset[i].num_combined < max_combined_num);
+			assert(grset[i].num_combined < max_combined);
 			for(int xj = 0; xj < v.size(); xj++)
 			{
 				int j = v[xj];
 				if(i >= j) continue;
 
-				assert(grset[j].num_combined < max_combined_num);
+				assert(grset[j].num_combined < max_combined);
 
 				if(grset[i].chrm != grset[j].chrm) continue;
 				if(grset[i].strand != grset[j].strand) continue;
@@ -220,8 +219,8 @@ int incubator::merge(const vector<combined_graph> &grset, vector<combined_graph>
 		int py = ds.find_set(y);
 
 		if(px == py) continue;
-		if(csize[px] >= max_combined_num) continue;
-		if(csize[py] >= max_combined_num) continue;
+		if(csize[px] >= max_combined) continue;
+		if(csize[py] >= max_combined) continue;
 
 		int sum = csize[px] + csize[py]; 
 
@@ -253,7 +252,7 @@ int incubator::merge(const vector<combined_graph> &grset, vector<combined_graph>
 
 	for(int i = 0; i < grset.size(); i++)
 	{
-		if(cc[i].num_combined >= max_combined_num)
+		if(cc[i].num_combined >= max_combined)
 		{
 			assert(pp[i] == i);
 			fixed.push_back(cc[i]);
