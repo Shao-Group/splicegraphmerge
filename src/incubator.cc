@@ -270,6 +270,27 @@ int incubator::write(const string &file, bool headers)
 	ofstream fout(file.c_str());
 	if(fout.fail()) exit(1);
 
+	int os = 0;
+	vector<int> offset;
+	for(int k = 0; k < groups.size(); k++)
+	{
+		offset.push_back(os);
+		os += groups[k].mset.size();
+	}
+
+	mutex mylock;								// lock for trsts
+	boost::asio::thread_pool pool(max_threads); // thread pool
+	for(int k = 0; k < groups.size(); k++)
+	{
+		combined_group &gp = groups[k];
+		int os = offset[k];
+		boost::asio::post(pool, [&gp, &fout, &mylock, os]{ gp.write(mylock, fout, os); });
+	}
+
+	pool.join();
+
+
+	/*
 	int index = 0;
 	for(int k = 0; k < groups.size(); k++)
 	{
@@ -278,7 +299,9 @@ int incubator::write(const string &file, bool headers)
 			groups[k].mset[j].write(fout, index++, headers);
 		}
 	}
+	*/
 
+	fout.flush();
 	fout.close();
 	return 0;
 }

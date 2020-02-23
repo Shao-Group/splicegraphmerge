@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <sstream>
+#include <fstream>
 #include "combined_group.h"
 #include "boost/pending/disjoint_sets.hpp"
 
@@ -21,6 +23,32 @@ int combined_group::resolve(int max_combined, double ratio)
 	build_similarity(ratio);
 	combine_graphs(max_combined);
 	stats();
+	return 0;
+}
+
+int combined_group::write(mutex &mylock, ofstream &fout, int offset)
+{
+	stringstream ss;
+	for(int k = 0; k < mset.size(); k++)
+	{
+		if(k > 0 && k % 1000 == 0)
+		{
+			const string &s = ss.str();
+			mylock.lock();
+			fout.write(s.c_str(), s.size());
+			mylock.unlock();
+			ss.str("");
+		}
+		else
+		{
+			mset[k].write(ss, offset + k, false);
+		}
+	}
+	const string &s = ss.str();
+	mylock.lock();
+	fout.write(s.c_str(), s.size());
+	mylock.unlock();
+
 	return 0;
 }
 

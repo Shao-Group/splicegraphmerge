@@ -2,6 +2,7 @@
 #define __COMBINED_GROUP_H__
 
 #include "combined_graph.h"
+#include <mutex>
 
 typedef map< int32_t, set<int> > MISI;
 typedef pair< int32_t, set<int> > PISI;
@@ -27,6 +28,7 @@ private:
 public:
 	int add_graph(const combined_graph &gr);
 	int resolve(int max_combined, double ratio);
+	int write(mutex &mylock, ofstream &fout, int offset);
 	int stats();
 
 private:
